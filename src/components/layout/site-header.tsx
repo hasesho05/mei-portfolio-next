@@ -23,8 +23,8 @@ export const SiteHeader = ({ currentPage }: SiteHeaderProps) => {
   return (
     <header className="site-header">
       <div className="site-header__desktop">
-        <TransitionLink className="site-header__brand" href="/works">
-          Mei
+        <TransitionLink className="site-header__brand" href="/">
+          Takahashi Mei
         </TransitionLink>
         <nav className="site-header__nav" aria-label="Primary navigation">
           {navItems.map((item) => (

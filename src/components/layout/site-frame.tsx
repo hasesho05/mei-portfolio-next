@@ -17,15 +17,15 @@ type SiteFrameProps = Readonly<{
 
 const routeTransition = {
   enter: {
-    duration: 0.25,
-    ease: [0.19, 1, 0.22, 1] as const,
+    duration: 0.33,
+    ease: [0.25, 1, 0.5, 1] as const,
   },
   exit: {
-    duration: 0.43,
+    duration: 0.33,
     ease: [0.4, 0, 1, 1] as const,
   },
-  detailExit: {
-    duration: 0.25,
+  headerExit: {
+    duration: 0.495,
     ease: [0.4, 0, 1, 1] as const,
   },
   hold: {
@@ -47,6 +47,8 @@ export const SiteFrame = ({ children }: SiteFrameProps) => {
   const [isDetailVeilVisible, setIsDetailVeilVisible] = useState(false);
   const [isHeaderMounted, setIsHeaderMounted] = useState(true);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [headerReadyPath, setHeaderReadyPath] = useState<string | null>(null);
+  const [readyPath, setReadyPath] = useState<string | null>(null);
   const currentPage =
     pathname === "/works"
       ? "Selected Work"
@@ -62,6 +64,7 @@ export const SiteFrame = ({ children }: SiteFrameProps) => {
       if (destinationHasHeader && !currentPage) {
         setIsHeaderMounted(true);
         setIsHeaderVisible(true);
+        setHeaderReadyPath(null);
       }
 
       if (shouldReduceMotion) {
@@ -92,9 +95,13 @@ export const SiteFrame = ({ children }: SiteFrameProps) => {
   const hideHeader = useCallback(() => {
     setIsHeaderVisible(false);
   }, []);
+  const markPageReady = useCallback(() => {
+    setReadyPath(pathname);
+    if (currentPage) setHeaderReadyPath(pathname);
+  }, [currentPage, pathname]);
   const navigation = useMemo(
-    () => ({ hideHeader, navigate }),
-    [hideHeader, navigate],
+    () => ({ hideHeader, markPageReady, navigate }),
+    [hideHeader, markPageReady, navigate],
   );
 
   const handleAnimationComplete = () => {
@@ -106,7 +113,7 @@ export const SiteFrame = ({ children }: SiteFrameProps) => {
       return;
     }
 
-    if (phase === "entering") setPhase("idle");
+    if (phase === "entering" && readyPath === pathname) setPhase("idle");
   };
 
   const handleHeaderAnimationComplete = () => {
@@ -157,18 +164,17 @@ export const SiteFrame = ({ children }: SiteFrameProps) => {
 
   if (pathname === "/") return children;
 
-  const isVisible = phase === "idle" || phase === "entering";
-  const isReturningToWorks =
-    phase === "exiting" &&
-    pathname.startsWith("/work/") &&
-    pendingHref.current === "/works";
+  const isPageReady = readyPath === pathname;
+  const isHeaderReady =
+    headerReadyPath === pathname ||
+    (headerReadyPath !== null && currentPage !== null);
+  const isVisible =
+    isPageReady && (phase === "idle" || phase === "entering");
   const transition =
     phase === "waiting"
       ? routeTransition.hold
       : phase === "exiting"
-        ? isReturningToWorks
-          ? routeTransition.detailExit
-          : routeTransition.exit
+        ? routeTransition.exit
         : routeTransition.enter;
 
   return (
@@ -176,17 +182,16 @@ export const SiteFrame = ({ children }: SiteFrameProps) => {
       {currentPage && isHeaderMounted ? (
         <motion.div
           className="site-header-frame site-shell"
-          initial={false}
+          initial={{ opacity: 0 }}
           animate={{
-            opacity: isHeaderVisible ? 1 : 0,
-            filter: isHeaderVisible ? "blur(0px)" : "blur(3px)",
+            opacity: isHeaderReady && isHeaderVisible ? 1 : 0,
           }}
           transition={
             shouldReduceMotion
               ? { duration: 0 }
               : isHeaderVisible
                 ? routeTransition.enter
-                : { ...routeTransition.exit, delay: 0.12 }
+                : routeTransition.headerExit
           }
           onAnimationComplete={handleHeaderAnimationComplete}
         >
@@ -197,10 +202,9 @@ export const SiteFrame = ({ children }: SiteFrameProps) => {
       <motion.div
         className="route-transition"
         data-transitioning={phase !== "idle"}
-        initial={false}
+        initial={{ opacity: 0 }}
         animate={{
           opacity: isVisible ? 1 : 0,
-          filter: isVisible ? "blur(0px)" : "blur(3px)",
         }}
         transition={shouldReduceMotion ? { duration: 0 } : transition}
         onAnimationComplete={handleAnimationComplete}

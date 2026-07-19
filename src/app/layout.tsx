@@ -19,7 +19,7 @@ type RootLayoutProps = Readonly<{
 }>;
 
 const RootLayout = ({ children }: RootLayoutProps) => (
-  <html lang="ja">
+  <html lang="ja" data-scroll-behavior="smooth">
     <body>
       <SiteFrame>{children}</SiteFrame>
     </body>

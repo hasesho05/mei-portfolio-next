@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { PageReady } from "@/components/layout/page-ready";
 import { InformationBotanical } from "@/features/information/components/information-botanical";
 
 export const metadata: Metadata = {
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
 const InformationPage = () => (
   <div className="site-shell">
     <main className="information">
+      <PageReady />
       <div className="information__body">
         <header className="information__intro">
           <h1>Mei Takahashi</h1>

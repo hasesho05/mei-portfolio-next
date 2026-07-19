@@ -1,10 +1,10 @@
 import { Triangle } from "lucide-react";
 import type { Metadata } from "next";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 
 import { TransitionLink } from "@/components/navigation/transition-link";
 import { getWorkBySlug, getWorks } from "@/features/work/api/get-works";
+import { DetailImages } from "@/features/work/components/detail-images";
 import { DetailIndexLink } from "@/features/work/components/detail-index-link";
 
 type WorkPageProps = Readonly<{
@@ -43,28 +43,7 @@ const WorkPage = async ({ params }: WorkPageProps) => {
           <span>{work.title}</span>
         </h1>
       </header>
-      <div className="detail__images">
-        {images.map((image) => (
-          <div
-            className="detail__image-wrap"
-            style={
-              {
-                "--work-aspect-ratio": `${image.width} / ${image.height}`,
-              } as React.CSSProperties
-            }
-            key={image.src}
-          >
-            <Image
-              className="detail__image"
-              src={image.src}
-              alt={image.alt}
-              fill
-              sizes="(min-width: 768px) 684px, 100vw"
-              priority
-            />
-          </div>
-        ))}
-      </div>
+      <DetailImages images={images} />
       <div className="detail__project-info">
         <p>{work.title}</p>
         <p>

@@ -57,9 +57,11 @@
   --layout-gutter-desktop: 2.75rem;
   --layout-header-desktop: 3.5rem;
   --layout-gallery-top-mobile: 7rem;
-  --layout-gallery-top-desktop: 10.75rem;
+  --layout-gallery-top-desktop: var(--space-6);
   --layout-gallery-bottom-mobile: 3rem;
   --layout-gallery-bottom-desktop: 8.5rem;
+  /* Limits the vertical travel of each gallery column during page scroll. */
+  --layout-gallery-parallax-distance: 5rem;
   --layout-card-media-ratio: 1.2735;
   --layout-detail-width: 42.75rem;
   --layout-selection-scale: 1.05;
@@ -301,10 +303,8 @@ html[data-detail-transition="true"] .site-header-frame {
 }
 
 .site-header {
-  position: absolute;
-  z-index: 10;
-  inset: 0 0 auto;
-  height: var(--space-8);
+  position: relative;
+  z-index: var(--z-site-header);
 }
 
 .site-header__mobile {
@@ -374,10 +374,15 @@ html[data-detail-transition="true"] .site-header-frame {
 }
 
 .gallery {
-  display: grid;
-  gap: var(--space-6);
+  width: 100%;
   padding: var(--layout-gallery-top-mobile) var(--layout-gutter-mobile)
     var(--layout-gallery-bottom-mobile);
+}
+
+.gallery__grid,
+.gallery__column {
+  display: grid;
+  gap: var(--space-6);
 }
 
 .work-card {
@@ -430,14 +435,6 @@ html[data-detail-transition="true"] .site-header-frame {
 
 .work-card__title span {
   display: block;
-}
-
-.page-transition-blank {
-  position: fixed;
-  z-index: var(--z-page-transition);
-  inset: 0;
-  background: var(--color-canvas);
-  pointer-events: auto;
 }
 
 .route-transition-veil {
@@ -512,6 +509,12 @@ html[data-detail-transition="true"] .site-header-frame {
 .detail__image-wrap {
   position: relative;
   aspect-ratio: var(--work-aspect-ratio);
+  opacity: 0;
+  transition: opacity var(--motion-duration-normal) var(--motion-ease-soft);
+}
+
+.detail__image-wrap[data-revealed="true"] {
+  opacity: 1;
 }
 
 .detail__image {
@@ -666,10 +669,25 @@ html[data-detail-transition="true"] .site-header-frame {
   }
 
   .gallery {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0;
     padding: var(--layout-gallery-top-desktop) var(--layout-gutter-desktop)
       var(--layout-gallery-bottom-desktop);
+  }
+
+  .gallery__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: start;
+    gap: 0;
+  }
+
+  .gallery__column {
+    gap: 0;
+    transform: translateY(
+      calc(
+        var(--layout-gallery-parallax-distance) *
+        var(--gallery-parallax-progress)
+      )
+    );
+    will-change: transform;
   }
 
   .work-card {
@@ -747,5 +765,9 @@ html[data-detail-transition="true"] .site-header-frame {
     transition-duration: 0.01ms;
     animation-duration: 0.01ms;
     animation-iteration-count: 1;
+  }
+
+  .gallery__column {
+    transform: none;
   }
 }

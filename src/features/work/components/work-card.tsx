@@ -4,14 +4,18 @@ import { motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import type { MouseEvent } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import type { Work } from "@/features/work/types/work";
 
 type WorkCardProps = Readonly<{
   index: number;
+  isDeparting: boolean;
   isHidden: boolean;
+  isRevealed: boolean;
   isSelected: boolean;
+  onImageSettled: (index: number) => void;
+  onSelectionExitComplete: () => void;
   onSelectionSettled: () => void;
   onSelect: (slug: string) => void;
   work: Work;
@@ -19,25 +23,29 @@ type WorkCardProps = Readonly<{
 
 export const WorkCard = ({
   index,
+  isDeparting,
   isHidden,
+  isRevealed,
   isSelected,
+  onImageSettled,
+  onSelectionExitComplete,
   onSelectionSettled,
   onSelect,
   work,
 }: WorkCardProps) => {
   const shouldReduceMotion = useReducedMotion();
   const imageRef = useRef<HTMLImageElement>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const hasSettled = useRef(false);
   const aspectRatio = `${work.thumbnail.width} / ${work.thumbnail.height}`;
-  const isInteractionDisabled = !isLoaded || isHidden;
+  const isInteractionDisabled = !isRevealed || isHidden;
 
   const handleLoadComplete = useCallback(() => {
-    if (isLoaded) return;
-    setIsLoaded(true);
-  }, [isLoaded]);
+    if (hasSettled.current) return;
+    hasSettled.current = true;
+    onImageSettled(index);
+  }, [index, onImageSettled]);
 
   useEffect(() => {
-    if (isLoaded) return;
     if (imageRef.current?.complete) {
       handleLoadComplete();
       return;
@@ -45,7 +53,7 @@ export const WorkCard = ({
 
     const timeout = window.setTimeout(handleLoadComplete, 4000);
     return () => window.clearTimeout(timeout);
-  }, [handleLoadComplete, isLoaded]);
+  }, [handleLoadComplete]);
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
@@ -57,14 +65,26 @@ export const WorkCard = ({
     <motion.article
       initial={false}
       animate={{
-        opacity: isHidden ? 0 : 1,
+        opacity: isHidden || !isRevealed ? 0 : 1,
         scale: isSelected && !shouldReduceMotion ? 1.05 : 1,
       }}
-      transition={{ duration: isSelected ? 0.43 : 0.25 }}
+      transition={
+        isDeparting
+          ? {
+              opacity: { duration: 0.33, delay: 0.43 },
+              scale: { duration: 0.33 },
+            }
+          : { duration: 0.33 }
+      }
       aria-hidden={isHidden ? true : undefined}
       inert={isHidden ? true : undefined}
       onAnimationComplete={() => {
-        if (isSelected) onSelectionSettled();
+        if (!isSelected) return;
+        if (isDeparting) {
+          onSelectionExitComplete();
+          return;
+        }
+        onSelectionSettled();
       }}
     >
       <Link
@@ -98,20 +118,24 @@ export const WorkCard = ({
               { "--work-aspect-ratio": aspectRatio } as React.CSSProperties
             }
           >
-            <div className="work-card__reveal">
+            <motion.div
+              className="work-card__reveal"
+              initial={false}
+              animate={{ opacity: isRevealed ? 1 : 0 }}
+              transition={{ duration: shouldReduceMotion ? 0 : 0.33 }}
+            >
               <Image
                 className="work-card__image"
                 ref={imageRef}
                 src={work.thumbnail.src}
                 alt={work.thumbnail.alt}
                 fill
-                loading="eager"
                 priority={index < 4}
                 sizes="(min-width: 768px) 25vw, 100vw"
                 onLoad={handleLoadComplete}
                 onError={handleLoadComplete}
               />
-            </div>
+            </motion.div>
           </div>
           <h2 className="work-card__title">
             <span>{work.category}</span>

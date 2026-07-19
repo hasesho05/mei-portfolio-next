@@ -70,6 +70,23 @@ src/
 - Never animate layout-affecting properties when transform or opacity can express the same behavior.
 - Durations and easing curves must come from the motion tokens in `globals.css`.
 
+## Gallery loading and route transitions
+
+- Treat the gallery layout, its generous vertical padding, and transparent card/media backgrounds as separate from loading behavior. Do not alter them while tuning reveal motion unless the request explicitly changes layout.
+- The pale gray hover surface belongs to `.work-card__surface` only. It must remain transparent at rest and fade in only for hover/focus; never use it as a persistent media or grid background.
+- Do not hide an image behind a mask whose release depends solely on `onLoad`. Cached images can miss that event. Every loading/reveal state needs a `complete` check, an error path, and a bounded fallback that leaves artwork visible.
+- Keep loading state and visual reveal state separate. A failed or late animation must never leave `/works` white, non-interactive, or with all artwork clipped.
+- When coordinating the selected-work exit, start related exits from the same user action. Do not wait for one animation to complete before beginning a visually coupled exit unless the intended choreography explicitly requires it.
+- Preserve the detail-route transition as a separate flow: `/work/[slug]` has no site header, while `/works` and `/information` retain the shared header during their crossfade.
+- When adding, removing, or renaming Client Component props/state, update every caller in the same patch. Run the app after the change; type checking alone will not catch a stale Fast Refresh runtime prop error.
+- Verify motion with a fresh `/works` load and a real work-card click, not only through hot reload. If the development runtime has reported an exception or stale client state, restart it before judging the result.
+- Compare timing at the target viewport using the supplied recordings/screenshots. Small timing adjustments should be incremental (roughly 40ms at a time) and must not change unrelated transitions.
+
+## Repository hygiene
+
+- Never commit local dependency caches, build output, environment files, or editor/OS artifacts. In particular, keep `/.pnpm-store`, `/node_modules`, and `/.next` ignored.
+- Before an initial commit or push, inspect the staged file list and confirm the working tree is clean afterward.
+
 ## Quality gate
 
 Before handing off changes, run:

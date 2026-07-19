@@ -13,6 +13,7 @@ export type SiteNavigate = (
 
 export type SiteNavigation = Readonly<{
   hideHeader: () => void;
+  markPageReady: () => void;
   navigate: SiteNavigate;
 }>;
 
