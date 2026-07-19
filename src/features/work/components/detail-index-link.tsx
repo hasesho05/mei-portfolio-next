@@ -10,15 +10,19 @@ export const DetailIndexLink = () => {
 
   return (
     <motion.div
-      initial={shouldReduceMotion ? false : { opacity: 0, x: 16 }}
-      animate={{ opacity: 1, x: 0 }}
+      initial={
+        shouldReduceMotion
+          ? { opacity: 0, transform: "translateX(0)" }
+          : { opacity: 0, transform: "translateX(var(--space-4))" }
+      }
+      animate={{ opacity: 1, transform: "translateX(0)" }}
       transition={{
-        duration: shouldReduceMotion ? 0 : 0.43,
+        duration: shouldReduceMotion ? 0.2 : 0.43,
         delay: shouldReduceMotion ? 0 : 0.08,
         ease: [0.19, 1, 0.22, 1],
       }}
     >
-      <TransitionLink className="detail__back" href="/works">
+      <TransitionLink className="detail__back" href="/portfolio">
         <Triangle
           className="icon icon--navigation icon--navigation-back"
           aria-hidden="true"

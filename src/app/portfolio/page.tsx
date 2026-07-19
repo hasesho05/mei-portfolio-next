@@ -4,7 +4,7 @@ import { getWorks } from "@/features/work/api/get-works";
 import { WorkGrid } from "@/features/work/components/work-grid";
 
 export const metadata: Metadata = {
-  title: "Selected Work",
+  title: "Portfolio",
 };
 
 const WorksPage = async () => {

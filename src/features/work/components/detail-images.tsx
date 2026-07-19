@@ -35,7 +35,9 @@ export const DetailImages = ({ images }: DetailImagesProps) => {
     }
 
     const timeout = window.setTimeout(() => {
-      images.forEach((_, index) => handleImageSettled(index));
+      images.forEach((_, index) => {
+        handleImageSettled(index);
+      });
     }, 4000);
 
     return () => window.clearTimeout(timeout);

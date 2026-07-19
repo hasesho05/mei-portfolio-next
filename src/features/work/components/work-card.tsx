@@ -66,13 +66,16 @@ export const WorkCard = ({
       initial={false}
       animate={{
         opacity: isHidden || !isRevealed ? 0 : 1,
-        scale: isSelected && !shouldReduceMotion ? 1.05 : 1,
+        transform:
+          isSelected && !shouldReduceMotion
+            ? "scale(var(--layout-selection-scale))"
+            : "scale(1)",
       }}
       transition={
         isDeparting
           ? {
               opacity: { duration: 0.33, delay: 0.43 },
-              scale: { duration: 0.33 },
+              transform: { duration: 0.33 },
             }
           : { duration: 0.33 }
       }
@@ -107,8 +110,8 @@ export const WorkCard = ({
             className="work-card__surface"
             aria-hidden="true"
             variants={{
-              rest: { opacity: 0, scale: 0.9 },
-              hover: { opacity: 1, scale: 1 },
+              rest: { opacity: 0, transform: "scale(0.9)" },
+              hover: { opacity: 1, transform: "scale(1)" },
             }}
             transition={{ duration: 0.22 }}
           />

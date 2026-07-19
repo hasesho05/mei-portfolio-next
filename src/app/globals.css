@@ -104,6 +104,7 @@
   --motion-ease-soft: cubic-bezier(0.25, 1, 0.5, 1);
   --motion-ease-expressive: cubic-bezier(0.19, 1, 0.22, 1);
   --motion-blur-subtle: 3px;
+  --motion-menu-icon-rotation: 90deg;
 }
 
 @theme inline {
@@ -201,6 +202,10 @@ img {
 .site-header-frame {
   position: relative;
   z-index: var(--z-site-header);
+}
+
+.site-header-frame--reserved {
+  height: var(--reserved-header-height);
 }
 
 html[data-detail-transition="true"] .site-header-frame {
@@ -329,6 +334,12 @@ html[data-detail-transition="true"] .site-header-frame {
   border: 0;
   background: transparent;
   cursor: pointer;
+}
+
+.site-header__menu-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .site-header__current {
@@ -464,22 +475,6 @@ html[data-detail-transition="true"] .site-header-frame {
   gap: var(--space-2);
   min-height: 2.75rem;
   font-size: var(--font-size-detail-navigation);
-  animation: detail-index-enter var(--motion-duration-slow)
-    var(--motion-ease-soft) both;
-}
-
-@keyframes detail-index-enter {
-  from {
-    opacity: 0;
-    filter: blur(var(--motion-blur-subtle));
-    transform: translateX(var(--space-1));
-  }
-
-  to {
-    opacity: 1;
-    filter: blur(0);
-    transform: translateX(0);
-  }
 }
 
 .detail__header {
@@ -561,6 +556,20 @@ html[data-detail-transition="true"] .site-header-frame {
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-regular);
   line-height: var(--line-height-body);
+  animation: information-body-enter var(--motion-duration-normal)
+    var(--motion-ease-soft) both;
+}
+
+@keyframes information-body-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-2));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .information__intro h1,
@@ -736,6 +745,17 @@ html[data-detail-transition="true"] .site-header-frame {
     font-size: var(--font-size-detail-title);
   }
 
+  .detail__next .icon {
+    transition: transform var(--motion-duration-fast) var(--motion-ease-soft);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .detail__next:hover .icon,
+    .detail__next:focus-visible .icon {
+      transform: translateY(var(--space-1)) rotate(90deg);
+    }
+  }
+
   .information {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -762,12 +782,25 @@ html[data-detail-transition="true"] .site-header-frame {
   *::before,
   *::after {
     scroll-behavior: auto;
-    transition-duration: 0.01ms;
-    animation-duration: 0.01ms;
     animation-iteration-count: 1;
   }
 
   .gallery__column {
     transform: none;
+  }
+
+  .information__body {
+    animation-name: information-body-enter-reduced;
+    animation-duration: var(--motion-duration-fast);
+  }
+
+  @keyframes information-body-enter-reduced {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
   }
 }

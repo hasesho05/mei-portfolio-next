@@ -4,10 +4,10 @@ import { PageReady } from "@/components/layout/page-ready";
 import { InformationBotanical } from "@/features/information/components/information-botanical";
 
 export const metadata: Metadata = {
-  title: "Information",
+  title: "Statement",
 };
 
-const InformationPage = () => (
+const StatementPage = () => (
   <div className="site-shell">
     <main className="information">
       <PageReady />
@@ -47,4 +47,4 @@ const InformationPage = () => (
   </div>
 );
 
-export default InformationPage;
+export default StatementPage;

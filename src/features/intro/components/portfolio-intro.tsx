@@ -35,7 +35,7 @@ export const PortfolioIntro = ({ portrait }: PortfolioIntroProps) => {
   }, []);
 
   const enterWorks = useCallback(() => {
-    router.replace("/works");
+    router.replace("/portfolio");
   }, [router]);
 
   const startAutomaticSequence = useCallback(() => {
@@ -72,7 +72,7 @@ export const PortfolioIntro = ({ portrait }: PortfolioIntroProps) => {
       className="portfolio-intro"
       data-phase={phase}
       type="button"
-      aria-label="Enter selected work"
+      aria-label="Enter portfolio"
       onClick={handleSkip}
     >
       <motion.div
@@ -80,7 +80,7 @@ export const PortfolioIntro = ({ portrait }: PortfolioIntroProps) => {
         initial={false}
         animate={{
           opacity: phase === "loading" ? 0 : 1,
-          scale: phase === "exit" ? 1.025 : 1.04,
+          transform: phase === "exit" ? "scale(1.025)" : "scale(1.04)",
         }}
         transition={{
           opacity: { duration: phase === "loading" ? 0 : 0.66 },
@@ -104,8 +104,12 @@ export const PortfolioIntro = ({ portrait }: PortfolioIntroProps) => {
         initial={false}
         animate={{
           opacity: phase === "name" ? 0.78 : 0,
-          filter: phase === "name" ? "blur(0px)" : "blur(7px)",
-          y: phase === "name" ? 0 : 4,
+          filter:
+            phase === "name" ? "blur(0)" : "blur(var(--motion-blur-subtle))",
+          transform:
+            phase === "name"
+              ? "translate(-50%, -50%)"
+              : "translate(-50%, calc(-50% + var(--space-1)))",
         }}
         transition={{ duration: 0.66 }}
       >

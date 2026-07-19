@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import { usePathname, useRouter } from "next/navigation";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { SiteHeader } from "@/components/layout/site-header";
@@ -43,26 +43,32 @@ export const SiteFrame = ({ children }: SiteFrameProps) => {
   const previousPathname = useRef(pathname);
   const isAwaitingHeaderExit = useRef(false);
   const hasPushedRoute = useRef(false);
+  const headerFrameRef = useRef<HTMLDivElement>(null);
   const [phase, setPhase] = useState<TransitionPhase>("idle");
   const [isDetailVeilVisible, setIsDetailVeilVisible] = useState(false);
   const [isHeaderMounted, setIsHeaderMounted] = useState(true);
+  const [isHeaderSpaceReserved, setIsHeaderSpaceReserved] = useState(false);
+  const [reservedHeaderHeight, setReservedHeaderHeight] = useState(0);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [headerReadyPath, setHeaderReadyPath] = useState<string | null>(null);
   const [readyPath, setReadyPath] = useState<string | null>(null);
   const currentPage =
-    pathname === "/works"
-      ? "Selected Work"
-      : pathname === "/information"
-        ? "Information"
+    pathname === "/portfolio"
+      ? "Portfolio"
+      : pathname === "/statement"
+        ? "Statement"
         : null;
 
   const navigate = useCallback(
     (href: string, options?: SiteNavigateOptions) => {
       if (href === pathname || phase !== "idle") return;
 
-      const destinationHasHeader = href === "/works" || href === "/information";
+      const destinationHasHeader =
+        href === "/portfolio" || href === "/statement";
       if (destinationHasHeader && !currentPage) {
         setIsHeaderMounted(true);
+        setIsHeaderSpaceReserved(false);
+        setReservedHeaderHeight(0);
         setIsHeaderVisible(true);
         setHeaderReadyPath(null);
       }
@@ -120,7 +126,11 @@ export const SiteFrame = ({ children }: SiteFrameProps) => {
     if (isHeaderVisible) return;
 
     document.documentElement.dataset.detailTransition = "true";
+    setReservedHeaderHeight(
+      headerFrameRef.current?.getBoundingClientRect().height ?? 0,
+    );
     setIsHeaderMounted(false);
+    setIsHeaderSpaceReserved(true);
 
     if (
       isAwaitingHeaderExit.current &&
@@ -149,13 +159,16 @@ export const SiteFrame = ({ children }: SiteFrameProps) => {
   }, [pathname]);
 
   useEffect(() => {
-    const isHeaderRoute = pathname === "/works" || pathname === "/information";
+    const isHeaderRoute =
+      pathname === "/portfolio" || pathname === "/statement";
     const isReturningFromDetail = previousPathname.current.startsWith("/work/");
 
     if (isHeaderRoute && isReturningFromDetail) {
       delete document.documentElement.dataset.detailTransition;
       setIsDetailVeilVisible(false);
       setIsHeaderMounted(true);
+      setIsHeaderSpaceReserved(false);
+      setReservedHeaderHeight(0);
       setIsHeaderVisible(true);
     }
 
@@ -168,8 +181,7 @@ export const SiteFrame = ({ children }: SiteFrameProps) => {
   const isHeaderReady =
     headerReadyPath === pathname ||
     (headerReadyPath !== null && currentPage !== null);
-  const isVisible =
-    isPageReady && (phase === "idle" || phase === "entering");
+  const isVisible = isPageReady && (phase === "idle" || phase === "entering");
   const transition =
     phase === "waiting"
       ? routeTransition.hold
@@ -181,6 +193,7 @@ export const SiteFrame = ({ children }: SiteFrameProps) => {
     <SiteNavigationContext.Provider value={navigation}>
       {currentPage && isHeaderMounted ? (
         <motion.div
+          ref={headerFrameRef}
           className="site-header-frame site-shell"
           initial={{ opacity: 0 }}
           animate={{
@@ -197,6 +210,16 @@ export const SiteFrame = ({ children }: SiteFrameProps) => {
         >
           <SiteHeader currentPage={currentPage} />
         </motion.div>
+      ) : currentPage && isHeaderSpaceReserved ? (
+        <div
+          className="site-header-frame site-header-frame--reserved site-shell"
+          aria-hidden="true"
+          style={
+            {
+              "--reserved-header-height": `${reservedHeaderHeight}px`,
+            } as CSSProperties
+          }
+        />
       ) : null}
 
       <motion.div

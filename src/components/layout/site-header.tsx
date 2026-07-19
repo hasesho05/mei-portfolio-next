@@ -1,22 +1,23 @@
 "use client";
 
 import { Aperture, Menu, X } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
 
 import { TransitionLink } from "@/components/navigation/transition-link";
 
 type SiteHeaderProps = Readonly<{
-  currentPage: "Selected Work" | "Information";
+  currentPage: "Portfolio" | "Statement";
 }>;
 
 const navItems = [
-  { href: "/works", label: "Selected Work", level: "primary" },
-  { href: "/information", label: "Information", level: "secondary" },
+  { href: "/portfolio", label: "Portfolio", level: "primary" },
+  { href: "/statement", label: "Statement", level: "secondary" },
 ] as const;
 
 export const SiteHeader = ({ currentPage }: SiteHeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
   const toggleMenu = () => setIsMenuOpen((current) => !current);
   const closeMenu = () => setIsMenuOpen(false);
 
@@ -58,11 +59,35 @@ export const SiteHeader = ({ currentPage }: SiteHeaderProps) => {
           aria-controls="mobile-menu"
           onClick={toggleMenu}
         >
-          {isMenuOpen ? (
-            <X className="icon icon--menu" aria-hidden="true" />
-          ) : (
-            <Menu className="icon icon--menu" aria-hidden="true" />
-          )}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span
+              className="site-header__menu-icon"
+              key={isMenuOpen ? "close" : "open"}
+              initial={{
+                opacity: 0,
+                transform: shouldReduceMotion
+                  ? "rotate(0deg)"
+                  : "rotate(calc(var(--motion-menu-icon-rotation) * -1))",
+              }}
+              animate={{ opacity: 1, transform: "rotate(0deg)" }}
+              exit={{
+                opacity: 0,
+                transform: shouldReduceMotion
+                  ? "rotate(0deg)"
+                  : "rotate(var(--motion-menu-icon-rotation))",
+              }}
+              transition={{
+                duration: 0.2,
+                ease: [0.25, 1, 0.5, 1],
+              }}
+            >
+              {isMenuOpen ? (
+                <X className="icon icon--menu" aria-hidden="true" />
+              ) : (
+                <Menu className="icon icon--menu" aria-hidden="true" />
+              )}
+            </motion.span>
+          </AnimatePresence>
         </button>
         <span className="site-header__current">{currentPage}</span>
         <a
@@ -86,14 +111,23 @@ export const SiteHeader = ({ currentPage }: SiteHeaderProps) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: shouldReduceMotion ? 0.2 : 0.3 }}
           >
             <ul className="mobile-menu__list">
               {navItems.map((item, index) => (
                 <motion.li
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.06, duration: 0.33 }}
+                  initial={{
+                    opacity: 0,
+                    transform: shouldReduceMotion
+                      ? "translateY(0)"
+                      : "translateY(var(--space-4))",
+                  }}
+                  animate={{ opacity: 1, transform: "translateY(0)" }}
+                  transition={{
+                    delay: shouldReduceMotion ? 0 : index * 0.06,
+                    duration: shouldReduceMotion ? 0.2 : 0.25,
+                    ease: [0.25, 1, 0.5, 1],
+                  }}
                   key={item.href}
                 >
                   <TransitionLink href={item.href} onClick={closeMenu}>
