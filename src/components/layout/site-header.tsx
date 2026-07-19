@@ -1,8 +1,7 @@
 "use client";
 
-import { Aperture, Menu, X } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useState } from "react";
+import { Menu, X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
 import { TransitionLink } from "@/components/navigation/transition-link";
 
@@ -10,16 +9,43 @@ type SiteHeaderProps = Readonly<{
   currentPage: "Portfolio" | "Statement";
 }>;
 
-const navItems = [
+const desktopNavItems = [
   { href: "/portfolio", label: "Portfolio", level: "primary" },
   { href: "/statement", label: "Statement", level: "secondary" },
 ] as const;
 
+const mobileNavItems = [
+  { href: "/", label: "Home", external: false },
+  { href: "/portfolio", label: "Portfolio", external: false },
+  { href: "/statement", label: "Statement", external: false },
+  {
+    href: "https://www.instagram.com/",
+    label: "Instagram",
+    external: true,
+  },
+] as const;
+
 export const SiteHeader = ({ currentPage }: SiteHeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const shouldReduceMotion = useReducedMotion();
   const toggleMenu = () => setIsMenuOpen((current) => !current);
-  const closeMenu = () => setIsMenuOpen(false);
+  const closeMenu = useCallback(() => setIsMenuOpen(false), []);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeMenu();
+    };
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [closeMenu, isMenuOpen]);
 
   return (
     <header className="site-header">
@@ -28,7 +54,7 @@ export const SiteHeader = ({ currentPage }: SiteHeaderProps) => {
           Takahashi Mei
         </TransitionLink>
         <nav className="site-header__nav" aria-label="Primary navigation">
-          {navItems.map((item) => (
+          {desktopNavItems.map((item) => (
             <TransitionLink
               className="site-header__nav-link"
               data-level={item.level}
@@ -51,6 +77,14 @@ export const SiteHeader = ({ currentPage }: SiteHeaderProps) => {
       </div>
 
       <div className="site-header__mobile">
+        <TransitionLink
+          className="site-header__mobile-brand"
+          href="/"
+          onClick={closeMenu}
+        >
+          Takahashi Mei
+        </TransitionLink>
+        <span className="site-header__current">{currentPage}</span>
         <button
           className="site-header__menu-button"
           type="button"
@@ -59,86 +93,63 @@ export const SiteHeader = ({ currentPage }: SiteHeaderProps) => {
           aria-controls="mobile-menu"
           onClick={toggleMenu}
         >
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.span
-              className="site-header__menu-icon"
-              key={isMenuOpen ? "close" : "open"}
-              initial={{
-                opacity: 0,
-                transform: shouldReduceMotion
-                  ? "rotate(0deg)"
-                  : "rotate(calc(var(--motion-menu-icon-rotation) * -1))",
-              }}
-              animate={{ opacity: 1, transform: "rotate(0deg)" }}
-              exit={{
-                opacity: 0,
-                transform: shouldReduceMotion
-                  ? "rotate(0deg)"
-                  : "rotate(var(--motion-menu-icon-rotation))",
-              }}
-              transition={{
-                duration: 0.2,
-                ease: [0.25, 1, 0.5, 1],
-              }}
-            >
-              {isMenuOpen ? (
-                <X className="icon icon--menu" aria-hidden="true" />
-              ) : (
-                <Menu className="icon icon--menu" aria-hidden="true" />
-              )}
-            </motion.span>
-          </AnimatePresence>
+          <Menu
+            className="icon icon--menu site-header__menu-icon"
+            data-visible={!isMenuOpen}
+            aria-hidden="true"
+          />
+          <X
+            className="icon icon--menu site-header__menu-icon"
+            data-visible={isMenuOpen}
+            aria-hidden="true"
+          />
         </button>
-        <span className="site-header__current">{currentPage}</span>
-        <a
-          className="site-header__social"
-          href="https://www.instagram.com/"
-          aria-label="Instagram"
-          rel="noreferrer"
-          target="_blank"
-        >
-          <Aperture className="icon icon--small" aria-hidden="true" />
-        </a>
       </div>
 
-      <AnimatePresence>
-        {isMenuOpen ? (
-          <motion.nav
-            id="mobile-menu"
-            className="mobile-menu"
-            data-open="true"
-            aria-label="Mobile navigation"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: shouldReduceMotion ? 0.2 : 0.3 }}
-          >
-            <ul className="mobile-menu__list">
-              {navItems.map((item, index) => (
-                <motion.li
-                  initial={{
-                    opacity: 0,
-                    transform: shouldReduceMotion
-                      ? "translateY(0)"
-                      : "translateY(var(--space-4))",
-                  }}
-                  animate={{ opacity: 1, transform: "translateY(0)" }}
-                  transition={{
-                    delay: shouldReduceMotion ? 0 : index * 0.06,
-                    duration: shouldReduceMotion ? 0.2 : 0.25,
-                    ease: [0.25, 1, 0.5, 1],
-                  }}
-                  key={item.href}
+      <nav
+        id="mobile-menu"
+        className="mobile-menu"
+        data-open={isMenuOpen ? "true" : "false"}
+        aria-label="Mobile navigation"
+        aria-hidden={!isMenuOpen}
+      >
+        <p className="mobile-menu__eyebrow">Navigation</p>
+        <ol className="mobile-menu__list">
+          {mobileNavItems.map((item, index) => (
+            <li key={item.href}>
+              {item.external ? (
+                <a
+                  className="mobile-menu__link"
+                  href={item.href}
+                  rel="noreferrer"
+                  target="_blank"
+                  tabIndex={isMenuOpen ? undefined : -1}
+                  onClick={closeMenu}
                 >
-                  <TransitionLink href={item.href} onClick={closeMenu}>
-                    {item.label}
-                  </TransitionLink>
-                </motion.li>
-              ))}
-            </ul>
-          </motion.nav>
-        ) : null}
-      </AnimatePresence>
+                  <span className="mobile-menu__index" aria-hidden="true">
+                    0{index + 1}
+                  </span>
+                  <span>{item.label}</span>
+                  <span className="mobile-menu__meta">External</span>
+                </a>
+              ) : (
+                <TransitionLink
+                  className="mobile-menu__link"
+                  href={item.href}
+                  aria-current={currentPage === item.label ? "page" : undefined}
+                  tabIndex={isMenuOpen ? undefined : -1}
+                  onClick={closeMenu}
+                >
+                  <span className="mobile-menu__index" aria-hidden="true">
+                    0{index + 1}
+                  </span>
+                  <span>{item.label}</span>
+                </TransitionLink>
+              )}
+            </li>
+          ))}
+        </ol>
+      </nav>
     </header>
   );
 };
