@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { PageReady } from "@/components/layout/page-ready";
-import { getCorporateCommissions } from "@/features/commission/api/get-commissions";
+import { getCommissions } from "@/features/commission/api/get-commissions";
 import { CommissionBand } from "@/features/commission/components/commission-band";
 
 export const metadata: Metadata = {
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 const CorporatePage = async () => {
-  const commissions = await getCorporateCommissions();
+  const commissions = await getCommissions("corporate");
 
   return (
     <main className="commission commission--corporate site-shell">

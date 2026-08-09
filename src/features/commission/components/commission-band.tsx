@@ -1,13 +1,14 @@
 import Image from "next/image";
 
-import type { Commission } from "@/features/commission/types/commission";
-
-export type CommissionVariant = "corporate" | "wedding";
+import type {
+  Commission,
+  CommissionService,
+} from "@/features/commission/types/commission";
 
 type CommissionBandProps = Readonly<{
   commission: Commission;
   index: number;
-  variant: CommissionVariant;
+  variant: CommissionService;
 }>;
 
 const cutRoles = ["lead", "second", "third"] as const;
@@ -30,6 +31,9 @@ const cutSizes = {
 
 const formatIndex = (index: number) => String(index + 1).padStart(2, "0");
 
+const formatMeta = (commission: Commission) =>
+  commission.metaItems.map((item) => item.value).join(" ／ ");
+
 export const CommissionBand = ({
   commission,
   index,
@@ -40,7 +44,7 @@ export const CommissionBand = ({
       <div className="commission-band__caption" data-step="3">
         <p className="commission-band__index">{formatIndex(index)}</p>
         <h2 className="commission-band__title">{commission.title}</h2>
-        <p className="commission-band__meta">{commission.meta}</p>
+        <p className="commission-band__meta">{formatMeta(commission)}</p>
       </div>
 
       <div className="commission-band__cuts">

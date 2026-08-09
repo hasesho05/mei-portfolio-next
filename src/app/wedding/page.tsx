@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { PageReady } from "@/components/layout/page-ready";
-import { getWeddingCommissions } from "@/features/commission/api/get-commissions";
+import { getCommissions } from "@/features/commission/api/get-commissions";
 import { CommissionBand } from "@/features/commission/components/commission-band";
 
 export const metadata: Metadata = {
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 const WeddingPage = async () => {
-  const commissions = await getWeddingCommissions();
+  const commissions = await getCommissions("wedding");
 
   return (
     <main className="commission commission--wedding site-shell">
