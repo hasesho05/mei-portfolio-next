@@ -70,6 +70,8 @@
   --layout-gallery-parallax-distance: 5rem;
   /* Gallery thumbnails use an editorial portrait crop independent of source image orientation. */
   --layout-card-media-ratio: 3 / 4;
+  /* Embedded players for moving-image commissions; external hosts deliver 16:9. */
+  --layout-video-ratio: 16 / 9;
   --layout-detail-width: 42.75rem;
   --layout-selection-scale: 1.05;
   --layout-intro-mark-width: min(76vw, 32.5rem);
@@ -969,6 +971,17 @@ html[data-detail-transition="true"] .site-header-frame {
   list-style: none;
 }
 
+/* The whole band is one link: caption and cuts answer to the same hover,
+   focus, and press, restating that the three cuts are a single work. */
+.commission-band__link {
+  display: block;
+  transition: transform var(--motion-duration-fast) var(--motion-ease-soft);
+}
+
+.commission-band__link:active {
+  transform: scale(var(--motion-press-scale));
+}
+
 .commission-band__inner {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -1327,14 +1340,24 @@ html[data-detail-transition="true"] .site-header-frame {
 
 /* All three surfaces rise together, never one at a time. That answers the
    only question this layout can raise: is this three works, or one work in
-   three cuts? */
+   three cuts? Keyboard focus gets the same response outside the hover query,
+   because focus-visible does not require a fine pointer. */
+.commission-band__link:focus-visible .commission-cut__surface {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.commission-band__link:focus-visible .commission-cut__frame--next {
+  opacity: 1;
+}
+
 @media (hover: hover) and (pointer: fine) {
-  .commission-band:hover .commission-cut__surface {
+  .commission-band__link:hover .commission-cut__surface {
     opacity: 1;
     transform: scale(1);
   }
 
-  .commission-band:hover .commission-cut__frame--next {
+  .commission-band__link:hover .commission-cut__frame--next {
     opacity: 1;
   }
 }
@@ -1359,7 +1382,46 @@ html[data-detail-transition="true"] .site-header-frame {
     transition-property: opacity;
   }
 
-  .commission-band:hover .commission-cut__surface {
+  .commission-band__link:hover .commission-cut__surface,
+  .commission-band__link:focus-visible .commission-cut__surface {
     transform: none;
   }
+
+  .commission-band__link:active {
+    transform: none;
+  }
+}
+
+/* Commission detail — /corporate/[slug] and /wedding/[slug] ----------------
+   Shares the /work detail scaffolding, but keeps the shared header, shows
+   each cut at its own aspect ratio without the client-side reveal, and
+   embeds the player for moving-image cuts. */
+.commission-detail__cut {
+  position: relative;
+  aspect-ratio: var(--commission-cut-ratio);
+}
+
+.commission-detail__player {
+  display: block;
+  width: 100%;
+  border: 0;
+  aspect-ratio: var(--layout-video-ratio);
+}
+
+.commission-detail__meta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--space-1);
+  margin: var(--space-4) 0 0;
+}
+
+.commission-detail__meta-row {
+  display: grid;
+  grid-template-columns: var(--space-10) minmax(0, 1fr);
+  column-gap: var(--space-4);
+}
+
+.commission-detail__meta dt,
+.commission-detail__meta dd {
+  margin: 0;
 }

@@ -35,16 +35,17 @@ const routeTransition = {
 
 type TransitionPhase = "idle" | "exiting" | "waiting" | "entering";
 
-// Routes that keep the shared header during their crossfade. The detail route
-// deliberately stays out of this list.
+// Routes that keep the shared header during their crossfade. The /work
+// detail route deliberately stays out of this list; the commission detail
+// routes keep the header so index and detail read as one continuous page.
 const headerPageFor = (path: string) =>
   path === "/portfolio"
     ? "Portfolio"
     : path === "/statement"
       ? "Statement"
-      : path === "/corporate"
+      : path === "/corporate" || path.startsWith("/corporate/")
         ? "Corporate"
-        : path === "/wedding"
+        : path === "/wedding" || path.startsWith("/wedding/")
           ? "Wedding"
           : null;
 
