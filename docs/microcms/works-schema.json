@@ -1,0 +1,78 @@
+{
+  "apiFields": [
+    {
+      "idValue": "wSlugF1a2b3",
+      "fieldId": "slug",
+      "name": "スラッグ",
+      "kind": "text",
+      "required": true,
+      "isUnique": true
+    },
+    {
+      "idValue": "wTitleC4d5e",
+      "fieldId": "title",
+      "name": "タイトル",
+      "kind": "text",
+      "required": true,
+      "isUnique": false
+    },
+    {
+      "idValue": "wCategF6g7h",
+      "fieldId": "category",
+      "name": "カテゴリー",
+      "kind": "text",
+      "required": true,
+      "isUnique": false
+    },
+    {
+      "idValue": "wClienI8j9k",
+      "fieldId": "client",
+      "name": "クライアント",
+      "kind": "text",
+      "required": true,
+      "isUnique": false
+    },
+    {
+      "idValue": "wPubliL0m1n",
+      "fieldId": "publishedAt",
+      "name": "制作年",
+      "kind": "text",
+      "required": true,
+      "isUnique": false
+    },
+    {
+      "idValue": "wThumbO2p3q",
+      "fieldId": "thumbnail",
+      "name": "サムネイル",
+      "kind": "media",
+      "required": true
+    },
+    {
+      "idValue": "wImagsR4s5t",
+      "fieldId": "images",
+      "name": "作品画像",
+      "kind": "repeater",
+      "required": false,
+      "customFieldCreatedAtList": ["2026-08-09T00:00:00.000Z"]
+    }
+  ],
+  "customFields": [
+    {
+      "createdAt": "2026-08-09T00:00:00.000Z",
+      "updatedAt": "2026-08-09T00:00:00.000Z",
+      "fieldId": "workImage",
+      "name": "画像",
+      "fields": [
+        {
+          "idValue": "wImgFldU6v7",
+          "fieldId": "image",
+          "name": "画像",
+          "kind": "media",
+          "required": true
+        }
+      ],
+      "position": [["wImgFldU6v7"]],
+      "viewerGroup": "wIm"
+    }
+  ]
+}
