@@ -35,6 +35,19 @@ const routeTransition = {
 
 type TransitionPhase = "idle" | "exiting" | "waiting" | "entering";
 
+// Routes that keep the shared header during their crossfade. The detail route
+// deliberately stays out of this list.
+const headerPageFor = (path: string) =>
+  path === "/portfolio"
+    ? "Portfolio"
+    : path === "/statement"
+      ? "Statement"
+      : path === "/corporate"
+        ? "Corporate"
+        : path === "/wedding"
+          ? "Wedding"
+          : null;
+
 export const SiteFrame = ({ children }: SiteFrameProps) => {
   const pathname = usePathname();
   const router = useRouter();
@@ -52,19 +65,13 @@ export const SiteFrame = ({ children }: SiteFrameProps) => {
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [headerReadyPath, setHeaderReadyPath] = useState<string | null>(null);
   const [readyPath, setReadyPath] = useState<string | null>(null);
-  const currentPage =
-    pathname === "/portfolio"
-      ? "Portfolio"
-      : pathname === "/statement"
-        ? "Statement"
-        : null;
+  const currentPage = headerPageFor(pathname);
 
   const navigate = useCallback(
     (href: string, options?: SiteNavigateOptions) => {
       if (href === pathname || phase !== "idle") return;
 
-      const destinationHasHeader =
-        href === "/portfolio" || href === "/statement";
+      const destinationHasHeader = headerPageFor(href) !== null;
       if (destinationHasHeader && !currentPage) {
         setIsHeaderMounted(true);
         setIsHeaderSpaceReserved(false);
@@ -159,8 +166,7 @@ export const SiteFrame = ({ children }: SiteFrameProps) => {
   }, [pathname]);
 
   useEffect(() => {
-    const isHeaderRoute =
-      pathname === "/portfolio" || pathname === "/statement";
+    const isHeaderRoute = headerPageFor(pathname) !== null;
     const isReturningFromDetail = previousPathname.current.startsWith("/work/");
 
     if (isHeaderRoute && isReturningFromDetail) {

@@ -1,22 +1,26 @@
 "use client";
 
-import { Menu, X } from "lucide-react";
+import { Home, Menu, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { TransitionLink } from "@/components/navigation/transition-link";
 
 type SiteHeaderProps = Readonly<{
-  currentPage: "Portfolio" | "Statement";
+  currentPage: "Portfolio" | "Statement" | "Corporate" | "Wedding";
 }>;
 
 const desktopNavItems = [
   { href: "/portfolio", label: "Portfolio", level: "primary" },
+  { href: "/corporate", label: "Corporate", level: "primary" },
+  { href: "/wedding", label: "Wedding", level: "primary" },
   { href: "/statement", label: "Statement", level: "secondary" },
 ] as const;
 
 const mobileNavItems = [
   { href: "/", label: "Home", external: false },
   { href: "/portfolio", label: "Portfolio", external: false },
+  { href: "/corporate", label: "Corporate", external: false },
+  { href: "/wedding", label: "Wedding", external: false },
   { href: "/statement", label: "Statement", external: false },
   {
     href: "https://www.instagram.com/",
@@ -80,9 +84,10 @@ export const SiteHeader = ({ currentPage }: SiteHeaderProps) => {
         <TransitionLink
           className="site-header__mobile-brand"
           href="/"
+          aria-label="Home"
           onClick={closeMenu}
         >
-          Takahashi Mei
+          <Home className="icon site-header__home-icon" aria-hidden="true" />
         </TransitionLink>
         <span className="site-header__current">{currentPage}</span>
         <button

@@ -36,7 +36,6 @@ export const WorkCard = ({
   const shouldReduceMotion = useReducedMotion();
   const imageRef = useRef<HTMLImageElement>(null);
   const hasSettled = useRef(false);
-  const aspectRatio = `${work.thumbnail.width} / ${work.thumbnail.height}`;
   const isInteractionDisabled = !isRevealed || isHidden;
 
   const handleLoadComplete = useCallback(() => {
@@ -115,12 +114,7 @@ export const WorkCard = ({
             }}
             transition={{ duration: 0.22 }}
           />
-          <div
-            className="work-card__media"
-            style={
-              { "--work-aspect-ratio": aspectRatio } as React.CSSProperties
-            }
-          >
+          <div className="work-card__media">
             <motion.div
               className="work-card__reveal"
               initial={false}
