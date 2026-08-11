@@ -58,13 +58,13 @@ export const CommissionBand = ({
               className="commission-cut"
               data-role={cutRoles[cutIndex]}
               data-step={cutIndex}
-              key={cut.src}
+              key={cut.image.src}
             >
               <span className="commission-cut__surface" aria-hidden="true" />
               <span className="commission-cut__media">
                 <Image
                   className="commission-cut__frame"
-                  src={cut.src}
+                  src={cut.image}
                   alt={cut.alt}
                   fill
                   priority={index === 0 && cutIndex === 0}
@@ -78,7 +78,7 @@ export const CommissionBand = ({
                 {cutIndex === 0 && commission.motionFrame ? (
                   <Image
                     className="commission-cut__frame commission-cut__frame--next"
-                    src={commission.motionFrame.src}
+                    src={commission.motionFrame.image}
                     alt={commission.motionFrame.alt}
                     fill
                     sizes={cutSizes[variant][0]}

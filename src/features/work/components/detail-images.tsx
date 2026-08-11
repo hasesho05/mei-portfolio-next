@@ -51,17 +51,17 @@ export const DetailImages = ({ images }: DetailImagesProps) => {
           data-revealed={index < revealedCount ? "true" : "false"}
           style={
             {
-              "--work-aspect-ratio": `${image.width} / ${image.height}`,
+              "--work-aspect-ratio": `${image.image.width} / ${image.image.height}`,
             } as React.CSSProperties
           }
-          key={image.src}
+          key={image.image.src}
         >
           <Image
             className="detail__image"
             ref={(element) => {
               imageRefs.current[index] = element;
             }}
-            src={image.src}
+            src={image.image}
             alt={image.alt}
             fill
             sizes="(min-width: 768px) 684px, 100vw"

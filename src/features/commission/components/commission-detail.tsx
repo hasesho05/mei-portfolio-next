@@ -92,21 +92,21 @@ export const CommissionDetail = ({
               title={cut.alt}
               loading="lazy"
               allow="fullscreen; picture-in-picture"
-              key={cut.src}
+              key={cut.image.src}
             />
           ) : (
             <div
               className="commission-detail__cut"
               style={
                 {
-                  "--commission-cut-ratio": `${cut.width} / ${cut.height}`,
+                  "--commission-cut-ratio": `${cut.image.width} / ${cut.image.height}`,
                 } as CSSProperties
               }
-              key={cut.src}
+              key={cut.image.src}
             >
               <Image
                 className="detail__image"
-                src={cut.src}
+                src={cut.image}
                 alt={cut.alt}
                 fill
                 sizes="(min-width: 48rem) 684px, 100vw"

@@ -89,7 +89,7 @@ export const PortfolioIntro = ({ portrait }: PortfolioIntroProps) => {
       >
         <Image
           className="portfolio-intro__image"
-          src={portrait.src}
+          src={portrait.image}
           alt={portrait.alt}
           fill
           priority

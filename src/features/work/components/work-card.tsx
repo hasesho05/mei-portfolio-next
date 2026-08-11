@@ -124,7 +124,7 @@ export const WorkCard = ({
               <Image
                 className="work-card__image"
                 ref={imageRef}
-                src={work.thumbnail.src}
+                src={work.thumbnail.image}
                 alt={work.thumbnail.alt}
                 fill
                 priority={index < 4}

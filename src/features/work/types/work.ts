@@ -1,8 +1,12 @@
+import type { StaticImageData } from "next/image";
+
+/**
+ * Images are statically imported from the data directory, so dimensions come
+ * from the file itself and a wrong path fails the build instead of 404ing.
+ */
 export type WorkImage = Readonly<{
   alt: string;
-  height: number;
-  src: string;
-  width: number;
+  image: StaticImageData;
 }>;
 
 export type Work = Readonly<{

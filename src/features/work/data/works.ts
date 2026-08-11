@@ -1,6 +1,35 @@
 import type { Work } from "@/features/work/types/work";
+import afterRain from "./images/after-rain/thumbnail.jpg";
+import betweenSeasons from "./images/between-seasons/thumbnail.jpg";
+import blueHour from "./images/blue-hour/thumbnail.jpg";
+import cobaltRoom from "./images/cobalt-room/thumbnail.jpg";
+import dayDream from "./images/day-dream/thumbnail.jpg";
+import distantMusic from "./images/distant-music/thumbnail.jpg";
+import everydaySun from "./images/everyday-sun/thumbnail.jpg";
+import familiarStranger from "./images/familiar-stranger/thumbnail.jpg";
+import fieldNotes from "./images/field-notes/thumbnail.jpg";
+import goldenWeather from "./images/golden-weather/thumbnail.jpg";
+import greenhouseStudy from "./images/greenhouse-study/thumbnail.jpg";
+import lilacEvening from "./images/lilac-evening/thumbnail.jpg";
+import longWeekend from "./images/long-weekend/thumbnail.jpg";
+import lunarTide from "./images/lunar-tide/thumbnail.jpg";
+import newRituals from "./images/new-rituals/thumbnail.jpg";
+import offSeason from "./images/off-season/thumbnail.jpg";
+import ordinaryLight from "./images/ordinary-light/thumbnail.jpg";
+import paperFlowers from "./images/paper-flowers/thumbnail.jpg";
+import quietBloom from "./images/quiet-bloom/thumbnail.jpg";
+import softArchitecture from "./images/soft-architecture/thumbnail.jpg";
+import softFocus from "./images/soft-focus/thumbnail.jpg";
+import stillMoving from "./images/still-moving/thumbnail.jpg";
+import summerNotation from "./images/summer-notation/thumbnail.jpg";
+import thePinkWall from "./images/the-pink-wall/thumbnail.jpg";
 
-export const dummyWorks = [
+/**
+ * Portfolio entries, newest first. Every image lives beside this file under
+ * images/<slug>/ — thumbnail.jpg for the index, numbered files for the
+ * detail page. See docs/content-guide.md for how to add a work.
+ */
+export const works = [
   {
     slug: "quiet-bloom",
     category: "Editorial",
@@ -8,10 +37,8 @@ export const dummyWorks = [
     client: "Personal Work",
     publishedAt: "2026",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=85",
+      image: quietBloom,
       alt: "Soft morning light across a green meadow",
-      width: 1200,
-      height: 1600,
     },
     images: [],
   },
@@ -22,10 +49,8 @@ export const dummyWorks = [
     client: "Atelier M",
     publishedAt: "2026",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1200&q=85",
+      image: softArchitecture,
       alt: "Tall forest trees fading into mist",
-      width: 1200,
-      height: 1600,
     },
     images: [],
   },
@@ -36,10 +61,8 @@ export const dummyWorks = [
     client: "Self Published",
     publishedAt: "2025",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=85",
+      image: betweenSeasons,
       alt: "Mountain lake beneath a quiet blue sky",
-      width: 1200,
-      height: 1500,
     },
     images: [],
   },
@@ -50,10 +73,8 @@ export const dummyWorks = [
     client: "Paper Journal",
     publishedAt: "2025",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1200&q=85",
+      image: blueHour,
       alt: "Rolling green hills under evening clouds",
-      width: 1200,
-      height: 1600,
     },
     images: [],
   },
@@ -64,10 +85,8 @@ export const dummyWorks = [
     client: "Union Magazine",
     publishedAt: "2025",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=85",
+      image: ordinaryLight,
       alt: "Sunlight reaching through a forest valley",
-      width: 1200,
-      height: 1600,
     },
     images: [],
   },
@@ -78,10 +97,8 @@ export const dummyWorks = [
     client: "Linen Studio",
     publishedAt: "2024",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=85",
+      image: summerNotation,
       alt: "Clear ocean water meeting pale sand",
-      width: 1200,
-      height: 1600,
     },
     images: [],
   },
@@ -92,10 +109,8 @@ export const dummyWorks = [
     client: "Nue",
     publishedAt: "2024",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1426604966848-d7adac402bff?auto=format&fit=crop&w=1200&q=85",
+      image: stillMoving,
       alt: "Evergreen forest and mountains in soft light",
-      width: 1200,
-      height: 1500,
     },
     images: [],
   },
@@ -106,10 +121,8 @@ export const dummyWorks = [
     client: "Personal Work",
     publishedAt: "2024",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1200&q=85",
+      image: dayDream,
       alt: "Still lake reflecting green mountains",
-      width: 1200,
-      height: 1600,
     },
     images: [],
   },
@@ -120,10 +133,8 @@ export const dummyWorks = [
     client: "Common Ground",
     publishedAt: "2024",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1433086966358-54859d0ed716?auto=format&fit=crop&w=1200&q=85",
+      image: fieldNotes,
       alt: "Waterfall falling through dense greenery",
-      width: 1200,
-      height: 1600,
     },
     images: [],
   },
@@ -134,10 +145,8 @@ export const dummyWorks = [
     client: "Moss Objects",
     publishedAt: "2024",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=85",
+      image: afterRain,
       alt: "River winding through a wide mountain valley",
-      width: 1200,
-      height: 1500,
     },
     images: [],
   },
@@ -148,10 +157,8 @@ export const dummyWorks = [
     client: "Rive Studio",
     publishedAt: "2023",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=85",
+      image: cobaltRoom,
       alt: "Starry night sky above a dark mountain range",
-      width: 1200,
-      height: 1600,
     },
     images: [],
   },
@@ -162,10 +169,8 @@ export const dummyWorks = [
     client: "Serein",
     publishedAt: "2023",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=85",
+      image: longWeekend,
       alt: "Forest path surrounded by tall trees",
-      width: 1200,
-      height: 1600,
     },
     images: [],
   },
@@ -176,10 +181,8 @@ export const dummyWorks = [
     client: "Kindred Journal",
     publishedAt: "2023",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?auto=format&fit=crop&w=1200&q=85",
+      image: thePinkWall,
       alt: "Wildflowers blooming across a bright field",
-      width: 1200,
-      height: 1500,
     },
     images: [],
   },
@@ -190,10 +193,8 @@ export const dummyWorks = [
     client: "Aster Goods",
     publishedAt: "2023",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=85",
+      image: everydaySun,
       alt: "Sunset light over a broad natural landscape",
-      width: 1200,
-      height: 1600,
     },
     images: [],
   },
@@ -204,10 +205,8 @@ export const dummyWorks = [
     client: "Self Published",
     publishedAt: "2022",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=85&sat=-30",
+      image: offSeason,
       alt: "Muted hills beneath an overcast sky",
-      width: 1200,
-      height: 1600,
     },
     images: [],
   },
@@ -218,10 +217,8 @@ export const dummyWorks = [
     client: "Paper Journal",
     publishedAt: "2022",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1200&q=85",
+      image: goldenWeather,
       alt: "Golden sunlight over open hills",
-      width: 1200,
-      height: 1600,
     },
     images: [],
   },
@@ -232,10 +229,8 @@ export const dummyWorks = [
     client: "Vernacular",
     publishedAt: "2022",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1523712999610-f77fbcfc3843?auto=format&fit=crop&w=1200&q=85",
+      image: greenhouseStudy,
       alt: "Green leaves and tree trunks in a quiet forest",
-      width: 1200,
-      height: 1500,
     },
     images: [],
   },
@@ -246,10 +241,8 @@ export const dummyWorks = [
     client: "Forma",
     publishedAt: "2022",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1200&q=85",
+      image: newRituals,
       alt: "Close view of flowers in natural daylight",
-      width: 1200,
-      height: 1600,
     },
     images: [],
   },
@@ -260,10 +253,8 @@ export const dummyWorks = [
     client: "Nue",
     publishedAt: "2021",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1200&q=85&sat=-20",
+      image: lunarTide,
       alt: "Quiet shoreline under cool evening light",
-      width: 1200,
-      height: 1600,
     },
     images: [],
   },
@@ -274,10 +265,8 @@ export const dummyWorks = [
     client: "Personal Work",
     publishedAt: "2021",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1473773508845-188df298d2d1?auto=format&fit=crop&w=1200&q=85",
+      image: familiarStranger,
       alt: "Dense garden leaves with a soft natural texture",
-      width: 1200,
-      height: 1500,
     },
     images: [],
   },
@@ -288,10 +277,8 @@ export const dummyWorks = [
     client: "Sable Review",
     publishedAt: "2021",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=1200&q=85&sat=-25",
+      image: distantMusic,
       alt: "Pale woodland path beneath a soft canopy",
-      width: 1200,
-      height: 1600,
     },
     images: [],
   },
@@ -302,10 +289,8 @@ export const dummyWorks = [
     client: "Aster Goods",
     publishedAt: "2021",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=1200&q=85",
+      image: lilacEvening,
       alt: "Warm light filtering through green forest trees",
-      width: 1200,
-      height: 1600,
     },
     images: [],
   },
@@ -316,10 +301,8 @@ export const dummyWorks = [
     client: "Self Published",
     publishedAt: "2020",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1497250681960-ef046c08a56e?auto=format&fit=crop&w=1200&q=85",
+      image: paperFlowers,
       alt: "Delicate green fern leaves in warm daylight",
-      width: 1200,
-      height: 1500,
     },
     images: [],
   },
@@ -330,10 +313,8 @@ export const dummyWorks = [
     client: "Personal Work",
     publishedAt: "2020",
     thumbnail: {
-      src: "https://images.unsplash.com/photo-1503435980610-a51f3ddfee50?auto=format&fit=crop&w=1200&q=85&sat=-20",
+      image: softFocus,
       alt: "Soft mist resting over a quiet forest",
-      width: 1200,
-      height: 1600,
     },
     images: [],
   },

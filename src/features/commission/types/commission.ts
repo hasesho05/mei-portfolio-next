@@ -1,9 +1,14 @@
+import type { StaticImageData } from "next/image";
+
 export type CommissionService = "corporate" | "wedding";
 
+/**
+ * Images are statically imported from the data directory, so dimensions come
+ * from the file itself and a wrong path fails the build instead of 404ing.
+ */
 export type CommissionCut = Readonly<{
   alt: string;
-  height: number;
-  src: string;
+  image: StaticImageData;
   /**
    * External video URL (YouTube or Vimeo) when this cut belongs to
    * moving-image work. The index always shows the still; the detail page
@@ -11,7 +16,6 @@ export type CommissionCut = Readonly<{
    * on an optional property.
    */
   videoUrl: string | null;
-  width: number;
 }>;
 
 export type CommissionMetaItem = Readonly<{
