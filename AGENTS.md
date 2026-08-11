@@ -37,6 +37,13 @@ src/
 - Keep CMS access behind `features/<feature>/api`. Replacing dummy data with MicroCMS must not require changing UI components.
 - Treat fetched data as immutable with readonly types.
 
+## Content management
+
+- Content is managed in this repository; there is no CMS. Works and commissions live in `features/*/data/*.ts` with images statically imported from the adjacent `data/images/` directories.
+- Keep content access behind `features/<feature>/api` so a future storage change never touches UI components.
+- Never commit video files or camera originals. Videos live on YouTube/Vimeo and are referenced by URL; images are committed as web-sized JPEGs.
+- Content editing workflow and rules for non-engineers: `docs/content-guide.md` (referenced by `GEMINI.md` for the site owner's AI CLI).
+
 ## React and Next.js
 
 - Server Components are the default. Add `"use client"` only at the smallest interactive boundary.
