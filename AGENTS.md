@@ -8,7 +8,8 @@ This file is the source of truth for every implementation session in this reposi
 - Let artwork provide the color. Interface chrome stays white, near-black, and muted gray.
 - Preserve generous negative space. Do not add cards, shadows, borders, gradients, badges, or decorative UI unless the product direction changes explicitly.
 - Desktop is a quiet four-column gallery. Mobile is an immersive single-column reading experience.
-- The root route is a full-bleed portrait introduction with an original white botanical line drawing and ephemeral centered name; it yields to `/works` automatically or on click through a white veil.
+- The root route is a full-bleed portrait introduction with an original white botanical line drawing and ephemeral centered name; it yields to `/portfolio` automatically or on click through a white veil.
+- Routes: `/portfolio` (personal work gallery) with `/work/[slug]` details, `/corporate` and `/wedding` (commission indexes, one band of three cuts per project) with `/corporate/[slug]` and `/wedding/[slug]` details, and `/statement`.
 - Motion must be subtle: opacity, color, and small scale/translate changes only.
 
 ## Design tokens
@@ -24,18 +25,30 @@ This file is the source of truth for every implementation session in this reposi
 Follow a pragmatic Bulletproof React structure:
 
 ```text
+content/               # works and commissions: photos + YAML, one folder per work
+scripts/               # generate-content.mjs and repo checks
 src/
   app/                 # Next.js routing, layouts, metadata, global styles
   components/          # shared cross-feature UI and layout
-  features/<feature>/  # feature api, components, data, and types
+  features/<feature>/  # feature api, components, data (generated), and types
   lib/                 # framework-agnostic shared utilities
 ```
 
 - Feature code stays inside its feature directory.
 - Do not create barrel `index.ts` files. Import from the defining module directly.
 - Route files compose features and own metadata; they do not contain feature implementation details.
-- Keep CMS access behind `features/<feature>/api`. Replacing dummy data with MicroCMS must not require changing UI components.
+- Keep content access behind `features/<feature>/api` so a storage change never touches UI components.
 - Treat fetched data as immutable with readonly types.
+
+## Content management
+
+- Content is managed in this repository; there is no CMS. Works and commissions live under `content/` — one folder per work with its images and a YAML file, ordered by each section's `order.txt`, with per-section page copy in `section.yaml`.
+- `scripts/generate-content.mjs` validates `content/` and generates the typed data modules (`src/features/*/data/*.generated.ts`, gitignored). It runs automatically inside `pnpm dev` / `build` / `check`; run `pnpm generate` after content edits when the dev server is already running, or before invoking `tsc` directly. On validation errors it writes nothing, so a running dev server never sees a half-generated state.
+- Validation errors are written in Japanese for the non-engineer site owner. Keep them that way when extending the generator.
+- Never edit `*.generated.ts` by hand.
+- The statement page copy and site-wide copy (header name, tab titles, meta description, Instagram URL) are deliberately NOT in `content/` — the owner edits them directly in `src/app/statement/page.tsx`, `src/app/layout.tsx`, and `src/components/layout/site-header.tsx`. Do not extract them into content files again.
+- Never commit video files or camera originals. Videos live on YouTube/Vimeo and are referenced by URL in the work's YAML (`video:` on a cut); the detail page embeds the player, the index always shows the still. Images are committed as web-sized JPEGs.
+- Content editing workflow and rules for non-engineers: `docs/content-guide.md` (referenced by `GEMINI.md` for the site owner's AI CLI).
 
 ## React and Next.js
 
@@ -75,11 +88,13 @@ src/
 - Treat the gallery layout, its generous vertical padding, and transparent card/media backgrounds as separate from loading behavior. Do not alter them while tuning reveal motion unless the request explicitly changes layout.
 - The pale gray hover surface belongs to `.work-card__surface` only. It must remain transparent at rest and fade in only for hover/focus; never use it as a persistent media or grid background.
 - Do not hide an image behind a mask whose release depends solely on `onLoad`. Cached images can miss that event. Every loading/reveal state needs a `complete` check, an error path, and a bounded fallback that leaves artwork visible.
-- Keep loading state and visual reveal state separate. A failed or late animation must never leave `/works` white, non-interactive, or with all artwork clipped.
+- Keep loading state and visual reveal state separate. A failed or late animation must never leave `/portfolio` white, non-interactive, or with all artwork clipped.
 - When coordinating the selected-work exit, start related exits from the same user action. Do not wait for one animation to complete before beginning a visually coupled exit unless the intended choreography explicitly requires it.
-- Preserve the detail-route transition as a separate flow: `/work/[slug]` has no site header, while `/works` and `/information` retain the shared header during their crossfade.
+- Preserve the detail-route transition as a separate flow: `/work/[slug]` has no site header, while `/portfolio` and `/statement` retain the shared header during their crossfade. The commission detail routes (`/corporate/[slug]`, `/wedding/[slug]`) deliberately keep the shared header so index and detail read as one continuous page.
+- The commission pages animate with CSS only (scroll-driven `view()` timelines, entrance staggers scoped to one band) and contain no Client Components of their own. Keep that property; every entrance must resolve to visible artwork when timelines are unsupported or motion is reduced.
+- Every route must render `<PageReady />` (or call `markPageReady()` from a client boundary); `SiteFrame` keeps a page at opacity 0 until it does, and type checking will not catch the omission.
 - When adding, removing, or renaming Client Component props/state, update every caller in the same patch. Run the app after the change; type checking alone will not catch a stale Fast Refresh runtime prop error.
-- Verify motion with a fresh `/works` load and a real work-card click, not only through hot reload. If the development runtime has reported an exception or stale client state, restart it before judging the result.
+- Verify motion with a fresh `/portfolio` load and a real work-card click, not only through hot reload. If the development runtime has reported an exception or stale client state, restart it before judging the result.
 - Compare timing at the target viewport using the supplied recordings/screenshots. Small timing adjustments should be incremental (roughly 40ms at a time) and must not change unrelated transitions.
 
 ## Repository hygiene
@@ -96,5 +111,7 @@ pnpm check
 pnpm exec tsc --noEmit
 pnpm build
 ```
+
+`pnpm check` and `pnpm build` regenerate content modules first; if you run `tsc` directly after changing `content/`, run `pnpm generate` beforehand.
 
 No task is complete with lint, type, accessibility, or build errors.

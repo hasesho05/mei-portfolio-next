@@ -68,7 +68,10 @@
   --layout-gallery-bottom-desktop: 8.5rem;
   /* Limits the vertical travel of each gallery column during page scroll. */
   --layout-gallery-parallax-distance: 5rem;
-  --layout-card-media-ratio: 1.2735;
+  /* Gallery thumbnails use an editorial portrait crop independent of source image orientation. */
+  --layout-card-media-ratio: 3 / 4;
+  /* Embedded players for moving-image commissions; external hosts deliver 16:9. */
+  --layout-video-ratio: 16 / 9;
   --layout-detail-width: 42.75rem;
   --layout-selection-scale: 1.05;
   --layout-intro-mark-width: min(76vw, 32.5rem);
@@ -343,8 +346,15 @@ html[data-detail-transition="true"] .site-header-frame {
 }
 
 .site-header__mobile-brand {
+  justify-content: center;
   justify-self: start;
+  min-width: var(--layout-touch-target);
   font-size: var(--font-size-social);
+}
+
+.site-header__home-icon {
+  width: var(--icon-size-menu);
+  height: var(--icon-size-menu);
 }
 
 .site-header__menu-button {
@@ -518,7 +528,7 @@ html[data-detail-transition="true"] .site-header-frame {
 .work-card__media {
   position: relative;
   overflow: hidden;
-  aspect-ratio: var(--work-aspect-ratio);
+  aspect-ratio: var(--layout-card-media-ratio);
   background: transparent;
 }
 
@@ -529,6 +539,7 @@ html[data-detail-transition="true"] .site-header-frame {
 
 .work-card__image {
   object-fit: cover;
+  object-position: center;
 }
 
 .work-card__title {
@@ -779,11 +790,11 @@ html[data-detail-transition="true"] .site-header-frame {
   .gallery__grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     align-items: start;
-    gap: 0;
+    column-gap: var(--space-6);
   }
 
   .gallery__column {
-    gap: 0;
+    gap: var(--space-6);
     transform: translateY(
       calc(
         var(--layout-gallery-parallax-distance) *
@@ -802,14 +813,11 @@ html[data-detail-transition="true"] .site-header-frame {
   }
 
   .work-card__media {
-    aspect-ratio: auto;
-    height: auto;
-    padding-top: calc(100% / var(--layout-card-media-ratio));
+    aspect-ratio: var(--layout-card-media-ratio);
   }
 
   .work-card__image {
-    object-fit: contain;
-    padding: 0;
+    object-fit: cover;
   }
 
   .work-card__title {
@@ -922,4 +930,498 @@ html[data-detail-transition="true"] .site-header-frame {
       opacity: 1;
     }
   }
+}
+
+/* Commission index — Corporate and Wedding ---------------------------------
+   Both pages carry only a handful of works, so the unit is a commission
+   rather than a thumbnail: one lead cut and two supporting cuts, read as a
+   single composition. The two pages share this scaffolding and differ only
+   in how the cuts are arranged. */
+.commission {
+  padding: var(--space-8) var(--layout-gutter-mobile)
+    var(--layout-gallery-bottom-mobile);
+}
+
+.commission__head {
+  margin-bottom: var(--space-8);
+}
+
+.commission__title {
+  margin: 0;
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-title);
+}
+
+.commission__lede {
+  max-width: var(--layout-information-copy-width);
+  margin: var(--space-4) 0 0;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+}
+
+/* Every grid here declares its columns. An implicit track sizes to the widest
+   item and pushes the document past the viewport on narrow screens. */
+.commission__list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--space-9);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The whole band is one link: caption and cuts answer to the same hover,
+   focus, and press, restating that the three cuts are a single work. */
+.commission-band__link {
+  display: block;
+  transition: transform var(--motion-duration-fast) var(--motion-ease-soft);
+}
+
+.commission-band__link:active {
+  transform: scale(var(--motion-press-scale));
+}
+
+.commission-band__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--space-4);
+}
+
+.commission-band__caption {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--space-1);
+}
+
+.commission-band__index {
+  margin: 0;
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-nav);
+}
+
+.commission-band__title {
+  margin: 0;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-body);
+}
+
+/* Meta stays near-black: hierarchy comes from size, not from a muted grey
+   that would drop below 4.5:1 against the white canvas. */
+.commission-band__meta {
+  margin: 0;
+  font-size: var(--font-size-mobile-menu-meta);
+  line-height: var(--line-height-caption);
+}
+
+.commission-band__cuts {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.commission-cut {
+  position: relative;
+  margin: 0;
+}
+
+/* The pale hover surface from the gallery: transparent at rest, never a
+   persistent background behind artwork. */
+.commission-cut__surface {
+  position: absolute;
+  inset: calc(var(--space-3) * -1);
+  border-radius: var(--radius-subtle);
+  background: var(--color-surface-hover);
+  opacity: 0;
+  /* Rest scale mirrors the selection scale so grow and settle share one
+     magnitude token instead of introducing a second ratio. */
+  transform: scale(calc(2 - var(--layout-selection-scale)));
+  pointer-events: none;
+  transition:
+    opacity var(--motion-duration-fast) var(--motion-ease-soft),
+    transform var(--motion-duration-fast) var(--motion-ease-soft);
+}
+
+.commission-cut__media {
+  position: relative;
+  /* Explicit block: aspect-ratio has no effect on an inline box. */
+  display: block;
+  overflow: hidden;
+  aspect-ratio: var(--layout-card-media-ratio);
+}
+
+.commission-cut__frame {
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Corporate — a lead cut with two supporting cuts stacked beside it. The set
+   alternates sides so five bands never read as five identical rows. */
+.commission--corporate .commission-band__cuts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.commission--corporate .commission-cut[data-role="lead"] {
+  grid-row: 1;
+  grid-column: 1 / span 2;
+}
+
+.commission--corporate .commission-cut[data-role="second"] {
+  grid-row: 2;
+  grid-column: 1;
+}
+
+.commission--corporate .commission-cut[data-role="third"] {
+  grid-row: 2;
+  grid-column: 2;
+}
+
+/* Wedding — three cuts of descending size on a diagonal, the way prints get
+   laid out on a table. */
+.commission--wedding .commission-band__cuts {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.commission--wedding .commission-cut[data-role="lead"] {
+  grid-row: 1;
+  grid-column: 1 / span 6;
+}
+
+.commission--wedding .commission-cut[data-role="second"] {
+  grid-row: 2;
+  grid-column: 1 / span 4;
+}
+
+.commission--wedding .commission-cut[data-role="third"] {
+  grid-row: 3;
+  grid-column: 3 / span 4;
+}
+
+@media (min-width: 48rem) {
+  .commission {
+    padding: var(--layout-gallery-top-desktop) var(--layout-gutter-desktop)
+      var(--layout-gallery-bottom-desktop);
+  }
+
+  .commission__head {
+    margin-bottom: var(--space-10);
+  }
+
+  .commission-band__title {
+    font-size: var(--font-size-card-desktop);
+    line-height: var(--line-height-card-desktop);
+  }
+
+  /* Corporate: twelve columns so the caption keeps a fixed narrow measure
+     while the cut set alternates sides. */
+  .commission--corporate .commission__list {
+    row-gap: var(--space-12);
+  }
+
+  .commission--corporate .commission-band__inner {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    align-items: start;
+    column-gap: var(--space-6);
+    row-gap: 0;
+  }
+
+  .commission--corporate .commission-band__caption {
+    grid-row: 1;
+    grid-column: 1 / span 3;
+    row-gap: var(--space-2);
+    padding-block: var(--space-5);
+  }
+
+  .commission--corporate .commission-band__cuts {
+    grid-row: 1;
+    grid-column: 5 / span 8;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    align-items: start;
+    gap: var(--space-6);
+    padding-block: var(--space-5);
+  }
+
+  .commission--corporate
+    .commission-band:nth-child(even)
+    .commission-band__caption {
+    grid-column: 10 / span 3;
+  }
+
+  .commission--corporate
+    .commission-band:nth-child(even)
+    .commission-band__cuts {
+    grid-column: 1 / span 8;
+  }
+
+  /* One lead cut four tracks wide, two supporting cuts two tracks wide
+     stacked beside it. At a shared 3/4 crop the stacked pair finishes level
+     with the lead, so the set closes as a rectangle without a second
+     aspect-ratio value. */
+  .commission--corporate .commission-cut[data-role="lead"] {
+    grid-row: 1 / span 2;
+    grid-column: 1 / span 4;
+  }
+
+  .commission--corporate .commission-cut[data-role="second"] {
+    grid-row: 1;
+    grid-column: 5 / span 2;
+  }
+
+  .commission--corporate .commission-cut[data-role="third"] {
+    grid-row: 2;
+    grid-column: 5 / span 2;
+  }
+
+  .commission--corporate
+    .commission-band:nth-child(even)
+    .commission-cut[data-role="lead"] {
+    grid-column: 3 / span 4;
+  }
+
+  .commission--corporate
+    .commission-band:nth-child(even)
+    .commission-cut[data-role="second"],
+  .commission--corporate
+    .commission-band:nth-child(even)
+    .commission-cut[data-role="third"] {
+    grid-column: 1 / span 2;
+  }
+
+  /* Wedding: the set keeps the full measure and the note drops below it, so
+     the smallest print never has to survive a leftover column. Odd bands fall
+     left to right, even bands rise, and one track is always left empty on the
+     open side. The drops are static margins, never animated. */
+  .commission--wedding .commission__list {
+    row-gap: var(--space-11);
+  }
+
+  .commission--wedding .commission-band__inner {
+    row-gap: var(--space-5);
+  }
+
+  .commission--wedding .commission-band__caption {
+    grid-row: 2;
+    row-gap: var(--space-2);
+  }
+
+  .commission--wedding .commission-band__cuts {
+    grid-row: 1;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    align-items: start;
+    column-gap: var(--space-5);
+    padding-top: var(--space-5);
+  }
+
+  .commission--wedding .commission-cut[data-role="lead"] {
+    grid-row: 1;
+    grid-column: 1 / span 4;
+  }
+
+  .commission--wedding .commission-cut[data-role="second"] {
+    grid-row: 1;
+    grid-column: 5 / span 3;
+    margin-top: var(--space-9);
+  }
+
+  .commission--wedding .commission-cut[data-role="third"] {
+    grid-row: 1;
+    grid-column: 8 / span 2;
+    margin-top: var(--space-12);
+  }
+
+  .commission--wedding
+    .commission-band:nth-child(even)
+    .commission-cut[data-role="lead"] {
+    grid-column: 7 / span 4;
+    margin-top: var(--space-8);
+  }
+
+  .commission--wedding
+    .commission-band:nth-child(even)
+    .commission-cut[data-role="second"] {
+    grid-column: 4 / span 3;
+    margin-top: var(--space-4);
+  }
+
+  .commission--wedding
+    .commission-band:nth-child(even)
+    .commission-cut[data-role="third"] {
+    grid-column: 2 / span 2;
+    margin-top: 0;
+  }
+}
+
+/* Commission motion --------------------------------------------------------
+   A stagger tuned for twenty tiles would spend its whole budget on an empty
+   page, and one that runs the length of the list would make the last work
+   wait for four others. So the stagger belongs to a band, never to the list:
+   three and twelve commissions arrive at exactly the same tempo.
+
+   Nothing here is declared opacity 0 outside a @keyframes block, and every
+   entrance uses fill-mode `backwards`. An unsupported timeline, an
+   unscrollable page, a cut-short animation and prefers-reduced-motion all
+   resolve to the same thing: the artwork on screen at opacity 1. */
+.commission [data-step="0"] {
+  --reveal-step: 0;
+}
+
+.commission [data-step="1"] {
+  --reveal-step: 1;
+}
+
+.commission [data-step="2"] {
+  --reveal-step: 2;
+}
+
+.commission [data-step="3"] {
+  --reveal-step: 3;
+}
+
+.commission__head,
+.commission-band__caption,
+.commission-cut {
+  animation-name: commission-piece-enter;
+  animation-duration: var(--motion-duration-normal);
+  animation-timing-function: var(--motion-ease-standard);
+  animation-fill-mode: backwards;
+}
+
+.commission-band__caption,
+.commission-cut {
+  animation-delay: calc(var(--motion-menu-stagger) * 2 * var(--reveal-step));
+}
+
+@keyframes commission-piece-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-3));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.commission-cut__frame--next {
+  opacity: 0;
+  transition: opacity var(--motion-duration-normal) var(--motion-ease-soft);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    /* Bands after the first hand their entrance to their own scroll position,
+       so each commission assembles as the reader reaches it. Time delays carry
+       no meaning on a progress timeline, so the per-step offset moves into
+       animation-range: seven percent of the entry range per step. */
+    .commission-band:not(:first-child) .commission-band__caption,
+    .commission-band:not(:first-child) .commission-cut {
+      animation-delay: 0s;
+      animation-timeline: view();
+    }
+
+    .commission-band:not(:first-child) [data-step="0"] {
+      animation-range: entry 2% entry 34%;
+    }
+
+    .commission-band:not(:first-child) [data-step="1"] {
+      animation-range: entry 9% entry 41%;
+    }
+
+    .commission-band:not(:first-child) [data-step="2"] {
+      animation-range: entry 16% entry 48%;
+    }
+
+    .commission-band:not(:first-child) [data-step="3"] {
+      animation-range: entry 23% entry 55%;
+    }
+  }
+}
+
+/* All three surfaces rise together, never one at a time. That answers the
+   only question this layout can raise: is this three works, or one work in
+   three cuts? Keyboard focus gets the same response outside the hover query,
+   because focus-visible does not require a fine pointer. */
+.commission-band__link:focus-visible .commission-cut__surface {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.commission-band__link:focus-visible .commission-cut__frame--next {
+  opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .commission-band__link:hover .commission-cut__surface {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .commission-band__link:hover .commission-cut__frame--next {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Entrances resolve to the base state, which is already visible. */
+  .commission__head,
+  .commission-band__caption,
+  .commission-cut {
+    animation: none;
+  }
+
+  /* The frame cross-fade stays: it carries information rather than
+     decoration, and an opacity change is not vestibular. It is only
+     shortened. */
+  .commission-cut__frame--next {
+    transition-duration: var(--motion-duration-fast);
+  }
+
+  .commission-cut__surface {
+    transform: none;
+    transition-property: opacity;
+  }
+
+  .commission-band__link:hover .commission-cut__surface,
+  .commission-band__link:focus-visible .commission-cut__surface {
+    transform: none;
+  }
+
+  .commission-band__link:active {
+    transform: none;
+  }
+}
+
+/* Commission detail — /corporate/[slug] and /wedding/[slug] ----------------
+   Shares the /work detail scaffolding, but keeps the shared header, shows
+   each cut at its own aspect ratio without the client-side reveal, and
+   embeds the player for moving-image cuts. */
+.commission-detail__cut {
+  position: relative;
+  aspect-ratio: var(--commission-cut-ratio);
+}
+
+.commission-detail__player {
+  display: block;
+  width: 100%;
+  border: 0;
+  aspect-ratio: var(--layout-video-ratio);
+}
+
+.commission-detail__meta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--space-1);
+  margin: var(--space-4) 0 0;
+}
+
+.commission-detail__meta-row {
+  display: grid;
+  grid-template-columns: var(--space-10) minmax(0, 1fr);
+  column-gap: var(--space-4);
+}
+
+.commission-detail__meta dt,
+.commission-detail__meta dd {
+  margin: 0;
 }
