@@ -1,26 +1,30 @@
 import type { Metadata } from "next";
 
 import { PageReady } from "@/components/layout/page-ready";
-import { getCommissions } from "@/features/commission/api/get-commissions";
+import {
+  getCommissionSection,
+  getCommissions,
+} from "@/features/commission/api/get-commissions";
 import { CommissionBand } from "@/features/commission/components/commission-band";
 
-export const metadata: Metadata = {
-  title: "Wedding",
-  description: "前撮りを中心にした結婚の写真の仕事。",
+export const generateMetadata = async (): Promise<Metadata> => {
+  const section = await getCommissionSection("wedding");
+  return { title: section.title, description: section.description };
 };
 
 const WeddingPage = async () => {
-  const commissions = await getCommissions("wedding");
+  const [section, commissions] = await Promise.all([
+    getCommissionSection("wedding"),
+    getCommissions("wedding"),
+  ]);
 
   return (
     <main className="commission commission--wedding site-shell">
       <PageReady />
 
       <div className="commission__head">
-        <h1 className="commission__title">Wedding</h1>
-        <p className="commission__lede">
-          前撮りを中心に、結婚の写真をお受けしています。1日のなかから数カットずつを選んで並べています。
-        </p>
+        <h1 className="commission__title">{section.title}</h1>
+        <p className="commission__lede">{section.lede}</p>
       </div>
 
       <ol className="commission__list">

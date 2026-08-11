@@ -1,6 +1,6 @@
 import { cache } from "react";
 
-import { works } from "@/features/work/data/works";
+import { works } from "@/features/work/data/works.generated";
 import type { Work } from "@/features/work/types/work";
 
 export const getWorks = cache(async (): Promise<readonly Work[]> => works);

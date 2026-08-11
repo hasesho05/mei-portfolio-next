@@ -1,0 +1,330 @@
+/**
+ * content/ ディレクトリを検証し、型付きのデータモジュール(*.generated.ts)を
+ * 生成する。dev / build / check の前に自動で走る。手動実行は `pnpm generate`。
+ *
+ * content/ の構造:
+ *   portfolio/order.txt + <slug>/work.yaml + thumbnail.jpg (+ 連番画像)
+ *   corporate/section.yaml + order.txt + <slug>/commission.yaml + 01..03.jpg (+ hover.jpg)
+ *   wedding/   同上
+ *
+ * 非エンジニアが編集する前提なので、エラーは日本語で・全部まとめて報告する。
+ */
+import { access, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { dirname, join, posix, relative, sep } from "node:path";
+import { parse } from "yaml";
+
+const root = process.cwd();
+const contentDir = join(root, "content");
+const errors = [];
+
+const report = (message) => errors.push(message);
+
+// エラーが1件でもあれば何も書き込まない。起動中の dev サーバーが
+// 不完全な生成結果を拾って落ちるのを防ぐため、書き込みは最後にまとめて行う。
+const pendingWrites = [];
+const queueWrite = (path, content) => pendingWrites.push([path, content]);
+
+const exists = async (path) => {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const readYaml = async (path) => {
+  const label = relative(root, path);
+  if (!(await exists(path))) {
+    report(`${label} がありません`);
+    return null;
+  }
+  try {
+    return parse(await readFile(path, "utf8"));
+  } catch (cause) {
+    report(
+      `${label} が読み取れません(YAMLの書き方を確認してください): ${cause.message}`,
+    );
+    return null;
+  }
+};
+
+const readOrder = async (sectionDir) => {
+  const orderPath = join(sectionDir, "order.txt");
+  const label = relative(root, orderPath);
+  if (!(await exists(orderPath))) {
+    report(`${label} がありません(表示順を1行1作品で書いてください)`);
+    return [];
+  }
+  const lines = (await readFile(orderPath, "utf8"))
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && !line.startsWith("#"));
+
+  const folders = (await readdir(sectionDir, { withFileTypes: true }))
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+
+  for (const slug of lines) {
+    if (!folders.includes(slug))
+      report(
+        `${label} に「${slug}」とありますが、フォルダ ${relative(root, join(sectionDir, slug))} がありません`,
+      );
+  }
+  for (const folder of folders) {
+    if (!lines.includes(folder))
+      report(
+        `フォルダ ${relative(root, join(sectionDir, folder))} が ${label} に載っていません(載せないと表示されません)`,
+      );
+  }
+  const seen = new Set();
+  for (const slug of lines) {
+    if (seen.has(slug)) report(`${label} に「${slug}」が2回書かれています`);
+    seen.add(slug);
+  }
+  return lines.filter((slug) => folders.includes(slug));
+};
+
+const requireString = (value, label) => {
+  if (typeof value === "number") return String(value);
+  if (typeof value !== "string" || value.trim() === "") {
+    report(`${label} が書かれていません`);
+    return "";
+  }
+  return value;
+};
+
+const requireImage = async (workDir, file, label) => {
+  if (typeof file !== "string" || file.trim() === "") {
+    report(`${label} の file(画像ファイル名)が書かれていません`);
+    return null;
+  }
+  const path = join(workDir, file);
+  if (!(await exists(path))) {
+    report(
+      `${label} に「${file}」とありますが、${relative(root, path)} がありません`,
+    );
+    return null;
+  }
+  return path;
+};
+
+/** 生成する import 文と、画像を参照する識別子を採番する。 */
+const createImportRegistry = (dataDir) => {
+  const imports = [];
+  const add = (imagePath) => {
+    const name = `image${imports.length}`;
+    const importPath = relative(dataDir, imagePath).split(sep).join(posix.sep);
+    imports.push(`import ${name} from "${importPath}";`);
+    return name;
+  };
+  return { add, imports };
+};
+
+const s = (value) => JSON.stringify(value);
+
+// --- portfolio ------------------------------------------------------------
+
+const generatePortfolio = async () => {
+  const sectionDir = join(contentDir, "portfolio");
+  const dataDir = join(root, "src/features/work/data");
+  const registry = createImportRegistry(dataDir);
+  const entries = [];
+
+  for (const slug of await readOrder(sectionDir)) {
+    const workDir = join(sectionDir, slug);
+    const label = `content/portfolio/${slug}/work.yaml`;
+    const data = await readYaml(join(workDir, "work.yaml"));
+    if (data === null) continue;
+
+    const thumbnailPath = join(workDir, "thumbnail.jpg");
+    if (!(await exists(thumbnailPath))) {
+      report(`content/portfolio/${slug}/ に thumbnail.jpg がありません`);
+      continue;
+    }
+
+    const images = [];
+    for (const [index, item] of (data.images ?? []).entries()) {
+      const path = await requireImage(
+        workDir,
+        item?.file,
+        `${label} の images ${index + 1}枚目`,
+      );
+      if (path === null) continue;
+      images.push(
+        `{ image: ${registry.add(path)}, alt: ${s(requireString(item?.alt, `${label} の images「${item?.file}」の alt`))} }`,
+      );
+    }
+
+    entries.push(`  {
+    slug: ${s(slug)},
+    category: ${s(requireString(data.category, `${label} の category`))},
+    title: ${s(requireString(data.title, `${label} の title`))},
+    client: ${s(requireString(data.client, `${label} の client`))},
+    publishedAt: ${s(requireString(data.year, `${label} の year`))},
+    thumbnail: {
+      image: ${registry.add(thumbnailPath)},
+      alt: ${s(requireString(data.thumbnailAlt, `${label} の thumbnailAlt`))},
+    },
+    images: [${images.join(", ")}],
+  },`);
+  }
+
+  queueWrite(
+    join(dataDir, "works.generated.ts"),
+    `// scripts/generate-content.mjs が content/portfolio から自動生成するファイル。
+// 直接編集しない。作品の追加・変更は content/ 側で行う。
+import type { Work } from "@/features/work/types/work";
+
+${registry.imports.join("\n")}
+
+export const works = [
+${entries.join("\n")}
+] satisfies readonly Work[];
+`,
+  );
+  return entries.length;
+};
+
+// --- corporate / wedding --------------------------------------------------
+
+const generateCommissionCut = async (registry, workDir, item, label) => {
+  const path = await requireImage(workDir, item?.file, label);
+  if (path === null) return null;
+  const video =
+    item?.video === undefined
+      ? null
+      : requireString(item.video, `${label} の video`);
+  return `{ image: ${registry.add(path)}, alt: ${s(requireString(item?.alt, `${label}(${item?.file})の alt`))}, videoUrl: ${s(video)} }`;
+};
+
+const generateCommissions = async (service, exportName) => {
+  const sectionDir = join(contentDir, service);
+  const dataDir = join(root, "src/features/commission/data");
+  const registry = createImportRegistry(dataDir);
+  const entries = [];
+
+  for (const slug of await readOrder(sectionDir)) {
+    const workDir = join(sectionDir, slug);
+    const label = `content/${service}/${slug}/commission.yaml`;
+    const data = await readYaml(join(workDir, "commission.yaml"));
+    if (data === null) continue;
+
+    const cutsInput = Array.isArray(data.cuts) ? data.cuts : [];
+    if (cutsInput.length !== 3) {
+      report(
+        `${label} の cuts は必ず3枚です(いまは${cutsInput.length}枚)。レイアウトが3カット前提のため`,
+      );
+      continue;
+    }
+    const cuts = [];
+    for (const [index, item] of cutsInput.entries()) {
+      const cut = await generateCommissionCut(
+        registry,
+        workDir,
+        item,
+        `${label} の cuts ${index + 1}枚目`,
+      );
+      if (cut !== null) cuts.push(cut);
+    }
+    if (cuts.length !== 3) continue;
+
+    const metaInput = data.meta ?? {};
+    const metaItems = Object.entries(metaInput).map(
+      ([metaLabel, value]) =>
+        `{ label: ${s(metaLabel)}, value: ${s(requireString(value, `${label} の meta「${metaLabel}」`))} }`,
+    );
+    if (metaItems.length === 0) report(`${label} に meta が書かれていません`);
+
+    const hover =
+      data.hover === undefined || data.hover === null
+        ? null
+        : await generateCommissionCut(
+            registry,
+            workDir,
+            data.hover,
+            `${label} の hover`,
+          );
+
+    entries.push(`  {
+    slug: ${s(slug)},
+    title: ${s(requireString(data.title, `${label} の title`))},
+    metaItems: [${metaItems.join(", ")}],
+    cuts: [
+      ${cuts.join(",\n      ")},
+    ],
+    motionFrame: ${hover ?? "null"},
+  },`);
+  }
+
+  queueWrite(
+    join(dataDir, `${service}.generated.ts`),
+    `// scripts/generate-content.mjs が content/${service} から自動生成するファイル。
+// 直接編集しない。作品の追加・変更は content/ 側で行う。
+import type { Commission } from "@/features/commission/types/commission";
+
+${registry.imports.join("\n")}
+
+export const ${exportName} = [
+${entries.join("\n")}
+] satisfies readonly Commission[];
+`,
+  );
+  return entries.length;
+};
+
+// --- section copy ---------------------------------------------------------
+
+const generateSections = async () => {
+  const sections = [];
+  for (const service of ["corporate", "wedding"]) {
+    const label = `content/${service}/section.yaml`;
+    const data = await readYaml(join(contentDir, service, "section.yaml"));
+    sections.push(
+      `  ${service}: {
+    title: ${s(requireString(data?.title, `${label} の title`))},
+    description: ${s(requireString(data?.description, `${label} の description`))},
+    lede: ${s(requireString(data?.lede, `${label} の lede`))},
+  },`,
+    );
+  }
+  queueWrite(
+    join(root, "src/features/commission/data/sections.generated.ts"),
+    `// scripts/generate-content.mjs が content/*/section.yaml から自動生成するファイル。
+// 直接編集しない。文言の変更は content/ 側で行う。
+import type {
+  CommissionSection,
+  CommissionService,
+} from "@/features/commission/types/commission";
+
+export const commissionSections = {
+${sections.join("\n")}
+} satisfies Record<CommissionService, CommissionSection>;
+`,
+  );
+};
+
+const counts = {
+  portfolio: await generatePortfolio(),
+  corporate: await generateCommissions("corporate", "corporateCommissions"),
+  wedding: await generateCommissions("wedding", "weddingCommissions"),
+};
+await generateSections();
+
+if (errors.length > 0) {
+  console.error(
+    "コンテンツにエラーがあります。修正してからもう一度実行してください:\n",
+  );
+  for (const message of errors) console.error(`  ✗ ${message}`);
+  console.error();
+  process.exit(1);
+}
+
+for (const [path, content] of pendingWrites) {
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, content);
+}
+
+console.log(
+  `✓ コンテンツを生成しました — portfolio ${counts.portfolio}件 / corporate ${counts.corporate}件 / wedding ${counts.wedding}件`,
+);

@@ -1,9 +1,11 @@
 import { cache } from "react";
 
-import { corporateCommissions } from "@/features/commission/data/corporate";
-import { weddingCommissions } from "@/features/commission/data/wedding";
+import { corporateCommissions } from "@/features/commission/data/corporate.generated";
+import { commissionSections } from "@/features/commission/data/sections.generated";
+import { weddingCommissions } from "@/features/commission/data/wedding.generated";
 import type {
   Commission,
+  CommissionSection,
   CommissionService,
 } from "@/features/commission/types/commission";
 
@@ -25,4 +27,9 @@ export const getCommissionBySlug = cache(
     const commissions = await getCommissions(service);
     return commissions.find((commission) => commission.slug === slug);
   },
+);
+
+export const getCommissionSection = cache(
+  async (service: CommissionService): Promise<CommissionSection> =>
+    commissionSections[service],
 );

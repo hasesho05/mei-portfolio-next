@@ -1,26 +1,30 @@
 import type { Metadata } from "next";
 
 import { PageReady } from "@/components/layout/page-ready";
-import { getCommissions } from "@/features/commission/api/get-commissions";
+import {
+  getCommissionSection,
+  getCommissions,
+} from "@/features/commission/api/get-commissions";
 import { CommissionBand } from "@/features/commission/components/commission-band";
 
-export const metadata: Metadata = {
-  title: "Corporate",
-  description: "企業の現場で撮影した写真と映像の仕事。",
+export const generateMetadata = async (): Promise<Metadata> => {
+  const section = await getCommissionSection("corporate");
+  return { title: section.title, description: section.description };
 };
 
 const CorporatePage = async () => {
-  const commissions = await getCommissions("corporate");
+  const [section, commissions] = await Promise.all([
+    getCommissionSection("corporate"),
+    getCommissions("corporate"),
+  ]);
 
   return (
     <main className="commission commission--corporate site-shell">
       <PageReady />
 
       <div className="commission__head">
-        <h1 className="commission__title">Corporate</h1>
-        <p className="commission__lede">
-          企業の現場でつくった写真と映像を、1件につき数カットずつ並べています。ムービーの作品は、カーソルを重ねると別のフレームに変わります。
-        </p>
+        <h1 className="commission__title">{section.title}</h1>
+        <p className="commission__lede">{section.lede}</p>
       </div>
 
       <ol className="commission__list">

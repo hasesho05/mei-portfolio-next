@@ -23,6 +23,13 @@ export type CommissionMetaItem = Readonly<{
   value: string;
 }>;
 
+/** Page-level copy for a commission index, editable in content/<service>/section.yaml. */
+export type CommissionSection = Readonly<{
+  title: string;
+  description: string;
+  lede: string;
+}>;
+
 /**
  * One commission, shown as a set of three cuts rather than a single
  * thumbnail. Five corporate works and four wedding works cannot fill a
