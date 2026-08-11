@@ -39,8 +39,10 @@ src/
 
 ## Content management
 
-- Content is managed in this repository; there is no CMS. Works and commissions live in `features/*/data/*.ts` with images statically imported from the adjacent `data/images/` directories.
-- Keep content access behind `features/<feature>/api` so a future storage change never touches UI components.
+- Content is managed in this repository; there is no CMS. All photos and copy live under `content/` — one folder per work with its images and a YAML file, ordered by each section's `order.txt`.
+- `scripts/generate-content.mjs` validates `content/` and generates the typed data modules (`src/features/*/data/*.generated.ts`, gitignored). It runs automatically inside `pnpm dev` / `build` / `check`; run `pnpm generate` after content edits when the dev server is already running, or before invoking `tsc` directly.
+- Validation errors are written in Japanese for the non-engineer site owner. Keep them that way when extending the generator.
+- Never edit `*.generated.ts` by hand, and keep content access behind `features/<feature>/api` so a storage change never touches UI components.
 - Never commit video files or camera originals. Videos live on YouTube/Vimeo and are referenced by URL; images are committed as web-sized JPEGs.
 - Content editing workflow and rules for non-engineers: `docs/content-guide.md` (referenced by `GEMINI.md` for the site owner's AI CLI).
 
@@ -103,5 +105,7 @@ pnpm check
 pnpm exec tsc --noEmit
 pnpm build
 ```
+
+`pnpm check` and `pnpm build` regenerate content modules first; if you run `tsc` directly after changing `content/`, run `pnpm generate` beforehand.
 
 No task is complete with lint, type, accessibility, or build errors.
