@@ -52,6 +52,7 @@ src/
 - Never edit `*.generated.ts` by hand.
 - The statement page copy and site-wide copy (header name, tab titles, meta description, Instagram URL) are deliberately NOT in `content/` — the owner edits them directly in `src/app/statement/page.tsx`, `src/app/layout.tsx`, and `src/components/layout/site-header.tsx`. Do not extract them into content files again.
 - Never commit video files or camera originals. Videos live on YouTube/Vimeo and are referenced by URL in the work's YAML (`video:` on a cut); the detail page embeds the player, the index always shows the still. Images are committed as web-sized JPEGs.
+- Image limits are enforced mechanically: `scripts/image-limits.mjs` is the single source for the thresholds (long edge 2000px, 500KB warning, 5MB generation error). `pnpm optimize-images` (sharp) normalizes oversized JPEGs idempotently — EXIF orientation is applied before resizing — and rejects non-JPEG images; the generator warns above 500KB and refuses to generate above 5MB.
 - Content editing workflow and rules for non-engineers: `docs/content-guide.md` (referenced by `GEMINI.md` for the site owner's AI CLI).
 
 ## React and Next.js
