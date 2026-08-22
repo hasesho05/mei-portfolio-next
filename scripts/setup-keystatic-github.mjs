@@ -14,12 +14,15 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { appendFileSync, existsSync } from "node:fs";
 import { createServer } from "node:http";
 import { createInterface } from "node:readline/promises";
+import { fileURLToPath } from "node:url";
 
 // keystatic.config.ts のフォールバックと同じ値。検出したリポジトリが
 // これと違う場合は NEXT_PUBLIC_KEYSTATIC_GITHUB_REPO の設定を案内する
 const DEFAULT_REPO = "hasesho05/mei-portfolio-next";
 
 const rl = createInterface({ input: process.stdin, output: process.stdout });
+// readline は生モードで Ctrl+C を握るため、明示しないと中断できなくなる
+rl.on("SIGINT", () => process.exit(130));
 const ask = async (question, fallback) => {
   const answer = (await rl.question(question)).trim();
   return answer === "" ? fallback : answer;
@@ -79,9 +82,9 @@ if (!siteInput) {
   console.error("ドメインは必須です(Callback URL に使います)");
   process.exit(1);
 }
-const siteUrl = siteInput.startsWith("http")
+const siteUrl = /^https?:\/\//.test(siteInput)
   ? siteInput.replace(/\/$/, "")
-  : `https://${siteInput}`;
+  : `https://${siteInput.replace(/\/$/, "")}`;
 
 const orgInput = await ask(
   "\nApp を Organization に作る場合はその名前を、個人アカウントに作る場合は空のまま Enter: ",
@@ -198,10 +201,16 @@ const writeEnv = await ask(
   "\nこの内容をローカル確認用に .env へ追記しますか?(.env は gitignore 済み) [y/N]: ",
   "n",
 );
-if (writeEnv.toLowerCase() === "y") {
+if (writeEnv.toLowerCase().startsWith("y")) {
+  // どこから実行されても、リポジトリルート(scripts/ の1つ上)の .env に書く
+  const envPath = fileURLToPath(new URL("../.env", import.meta.url));
   const lines = envVars.map(([name, value]) => `${name}=${value}`).join("\n");
-  appendFileSync(".env", `${existsSync(".env") ? "\n" : ""}${lines}\n`);
-  console.log("✓ .env に追記しました(コミットしないでください)");
+  appendFileSync(envPath, `${existsSync(envPath) ? "\n" : ""}${lines}\n`);
+  console.log(`✓ ${envPath} に追記しました(コミットしないでください)`);
+} else {
+  console.log(
+    "スキップしました(ローカルで GitHub モードを試すときは .env に上記4行を書いてください)",
+  );
 }
 
 console.log(`\n残りの手順:
@@ -210,11 +219,12 @@ console.log(`\n残りの手順:
      ${app.html_url}/installations/new
    「Only select repositories」で ${repo} だけを選ぶ
 
-2. Vercel に環境変数を設定して再デプロイする:
-${envVars.map(([name, value]) => `     printf '%s' '${value}' | vercel env add ${name} production`).join("\n")}
+2. Vercel に環境変数を設定して再デプロイする(コマンド実行後に上の値を
+   貼り付ける。値を引数に書かないのはシェル履歴に残さないため):
+${envVars.map(([name]) => `     vercel env add ${name} production`).join("\n")}
      vercel --prod
 
-3. https://${siteUrl.replace(/^https?:\/\//, "")}/keystatic を開き、GitHub ログイン → 編集 → 保存で
+3. ${siteUrl}/keystatic を開き、GitHub ログイン → 編集 → 保存で
    コミットが積まれることを確認する
 `);
 openBrowser(`${app.html_url}/installations/new`);
