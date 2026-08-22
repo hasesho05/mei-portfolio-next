@@ -2,9 +2,9 @@
  * content/ ディレクトリを検証し、型付きのデータモジュール(*.generated.ts)を
  * 生成する。dev / build / check の前に自動で走る。手動実行は `pnpm generate`。
  *
- * content/ の構造:
- *   portfolio/order.txt + <slug>/work.yaml + thumbnail.jpg (+ 連番画像)
- *   corporate/section.yaml + order.txt + <slug>/commission.yaml + 01..03.jpg (+ hover.jpg)
+ * content/ の構造(Keystatic 互換レイアウト):
+ *   portfolio/order.yaml + <slug>/index.yaml + thumbnail.jpg (+ 連番画像)
+ *   corporate/section.yaml + order.yaml + <slug>/index.yaml + 01..03.jpg (+ hover.jpg)
  *   wedding/   同上
  *
  * 非エンジニアが編集する前提なので、エラーは日本語で・全部まとめて報告する。
@@ -40,7 +40,18 @@ const readYaml = async (path) => {
     return null;
   }
   try {
-    return parse(await readFile(path, "utf8"));
+    const data = parse(await readFile(path, "utf8"));
+    if (data === null || data === undefined) {
+      report(`${label} が空です(中身を書いてください)`);
+      return null;
+    }
+    if (typeof data !== "object" || Array.isArray(data)) {
+      report(
+        `${label} の形式が正しくありません(YAMLの書き方を確認してください)`,
+      );
+      return null;
+    }
+    return data;
   } catch (cause) {
     report(
       `${label} が読み取れません(YAMLの書き方を確認してください): ${cause.message}`,
@@ -50,16 +61,30 @@ const readYaml = async (path) => {
 };
 
 const readOrder = async (sectionDir) => {
-  const orderPath = join(sectionDir, "order.txt");
+  const orderPath = join(sectionDir, "order.yaml");
   const label = relative(root, orderPath);
   if (!(await exists(orderPath))) {
-    report(`${label} がありません(表示順を1行1作品で書いてください)`);
+    report(
+      `${label} がありません(items: の下にフォルダ名を表示順で並べてください)`,
+    );
     return [];
   }
-  const lines = (await readFile(orderPath, "utf8"))
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0 && !line.startsWith("#"));
+  const data = await readYaml(orderPath);
+  if (data === null) return [];
+  if (!Array.isArray(data.items)) {
+    report(`${label} に items(フォルダ名の一覧)が書かれていません`);
+    return [];
+  }
+  const lines = [];
+  for (const [index, item] of data.items.entries()) {
+    if (typeof item !== "string" || item.trim() === "") {
+      report(
+        `${label} の items ${index + 1}番目がフォルダ名(文字列)ではありません(数字だけの名前は "2024" のように引用符で囲んでください)`,
+      );
+      continue;
+    }
+    lines.push(item.trim());
+  }
 
   const folders = (await readdir(sectionDir, { withFileTypes: true }))
     .filter((entry) => entry.isDirectory())
@@ -94,9 +119,11 @@ const requireString = (value, label) => {
   return value;
 };
 
-const requireImage = async (workDir, file, label) => {
+const requireImage = async (workDir, file, label, missingMessage) => {
   if (typeof file !== "string" || file.trim() === "") {
-    report(`${label} の file(画像ファイル名)が書かれていません`);
+    report(
+      missingMessage ?? `${label} の file(画像ファイル名)が書かれていません`,
+    );
     return null;
   }
   const path = join(workDir, file);
@@ -133,15 +160,17 @@ const generatePortfolio = async () => {
 
   for (const slug of await readOrder(sectionDir)) {
     const workDir = join(sectionDir, slug);
-    const label = `content/portfolio/${slug}/work.yaml`;
-    const data = await readYaml(join(workDir, "work.yaml"));
+    const label = `content/portfolio/${slug}/index.yaml`;
+    const data = await readYaml(join(workDir, "index.yaml"));
     if (data === null) continue;
 
-    const thumbnailPath = join(workDir, "thumbnail.jpg");
-    if (!(await exists(thumbnailPath))) {
-      report(`content/portfolio/${slug}/ に thumbnail.jpg がありません`);
-      continue;
-    }
+    const thumbnailPath = await requireImage(
+      workDir,
+      data.thumbnail,
+      `${label} の thumbnail`,
+      `${label} に thumbnail(サムネイル画像のファイル名)が書かれていません`,
+    );
+    if (thumbnailPath === null) continue;
 
     const images = [];
     for (const [index, item] of (data.images ?? []).entries()) {
@@ -206,8 +235,8 @@ const generateCommissions = async (service, exportName) => {
 
   for (const slug of await readOrder(sectionDir)) {
     const workDir = join(sectionDir, slug);
-    const label = `content/${service}/${slug}/commission.yaml`;
-    const data = await readYaml(join(workDir, "commission.yaml"));
+    const label = `content/${service}/${slug}/index.yaml`;
+    const data = await readYaml(join(workDir, "index.yaml"));
     if (data === null) continue;
 
     const cutsInput = Array.isArray(data.cuts) ? data.cuts : [];
@@ -229,12 +258,26 @@ const generateCommissions = async (service, exportName) => {
     }
     if (cuts.length !== 3) continue;
 
-    const metaInput = data.meta ?? {};
-    const metaItems = Object.entries(metaInput).map(
-      ([metaLabel, value]) =>
-        `{ label: ${s(metaLabel)}, value: ${s(requireString(value, `${label} の meta「${metaLabel}」`))} }`,
-    );
-    if (metaItems.length === 0) report(`${label} に meta が書かれていません`);
+    if (
+      data.meta !== undefined &&
+      data.meta !== null &&
+      !Array.isArray(data.meta)
+    ) {
+      report(
+        `${label} の meta の書き方が変わりました。「- label: クライアント」「  value: ◯◯」の一覧にしてください`,
+      );
+      continue;
+    }
+    const metaInput = data.meta ?? [];
+    const metaItems = metaInput.map((item, index) => {
+      const metaLabel = requireString(
+        item?.label,
+        `${label} の meta ${index + 1}件目の label`,
+      );
+      return `{ label: ${s(metaLabel)}, value: ${s(requireString(item?.value, `${label} の meta「${metaLabel || index + 1}」の value`))} }`;
+    });
+    if (metaItems.length === 0)
+      report(`${label} に meta(label と value の一覧)が書かれていません`);
 
     const hover =
       data.hover === undefined || data.hover === null

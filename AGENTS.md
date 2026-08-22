@@ -42,7 +42,8 @@ src/
 
 ## Content management
 
-- Content is managed in this repository; there is no CMS. Works and commissions live under `content/` — one folder per work with its images and a YAML file, ordered by each section's `order.txt`, with per-section page copy in `section.yaml`.
+- Content is managed in this repository; there is no CMS. Works and commissions live under `content/` — one folder per work with its images and an `index.yaml`, ordered by each section's `order.yaml` (`items:` array of slugs), with per-section page copy in `section.yaml`.
+- The layout follows the Keystatic conventions (entry file named `index.yaml`, thumbnail referenced explicitly as `thumbnail: <file>`, commission `meta` as a `label`/`value` array) ahead of the planned Keystatic Admin UI; keep new fields compatible with them.
 - `scripts/generate-content.mjs` validates `content/` and generates the typed data modules (`src/features/*/data/*.generated.ts`, gitignored). It runs automatically inside `pnpm dev` / `build` / `check`; run `pnpm generate` after content edits when the dev server is already running, or before invoking `tsc` directly. On validation errors it writes nothing, so a running dev server never sees a half-generated state.
 - Validation errors are written in Japanese for the non-engineer site owner. Keep them that way when extending the generator.
 - Never edit `*.generated.ts` by hand.
