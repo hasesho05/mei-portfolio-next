@@ -281,23 +281,27 @@ const generateCommissions = async (service, exportName) => {
       report(`${label} に meta(label と value の一覧)が書かれていません`);
 
     // hover なしの作品を Admin(Keystatic)で保存すると hover: {} が書かれる。
-    // file も alt も空ならホバー写真なしとして扱う。
+    // file も alt も空のマップだけをホバー写真なしとして扱い、
+    // それ以外の書き間違い(文字列など)は従来どおりエラーにする。
     const isBlank = (value) =>
       value === undefined ||
       value === null ||
       (typeof value === "string" && value.trim() === "");
-    const hasHover =
-      data.hover !== undefined &&
-      data.hover !== null &&
-      !(isBlank(data.hover.file) && isBlank(data.hover.alt));
-    const hover = hasHover
-      ? await generateCommissionCut(
+    let hover = null;
+    if (data.hover !== undefined && data.hover !== null) {
+      if (typeof data.hover !== "object" || Array.isArray(data.hover)) {
+        report(
+          `${label} の hover の書き方が正しくありません(file と alt を書いてください)`,
+        );
+      } else if (!(isBlank(data.hover.file) && isBlank(data.hover.alt))) {
+        hover = await generateCommissionCut(
           registry,
           workDir,
           data.hover,
           `${label} の hover`,
-        )
-      : null;
+        );
+      }
+    }
 
     entries.push(`  {
     slug: ${s(slug)},
