@@ -43,7 +43,10 @@ src/
 ## Content management
 
 - Content is managed in this repository; there is no CMS. Works and commissions live under `content/` — one folder per work with its images and an `index.yaml`, ordered by each section's `order.yaml` (`items:` array of slugs), with per-section page copy in `section.yaml`.
-- The layout follows the Keystatic conventions (entry file named `index.yaml`, thumbnail referenced explicitly as `thumbnail: <file>`, commission `meta` as a `label`/`value` array) ahead of the planned Keystatic Admin UI; keep new fields compatible with them.
+- The layout follows the Keystatic conventions (entry file named `index.yaml`, thumbnail referenced explicitly as `thumbnail: <file>`, commission `meta` as a `label`/`value` array); keep new fields compatible with them.
+- The Keystatic Admin UI edits `content/` at `/keystatic` during `pnpm dev` (local mode: saving writes files; committing stays manual). The schema lives in `keystatic.config.ts` and only shapes the editing UI — the generator remains the source of truth for validation and typed data, and the Keystatic reader API is never used. Both `/keystatic` and `/api/keystatic` return 404 in production builds until GitHub mode lands.
+- Keystatic may re-store images it touches under field-derived paths (e.g. `cuts/0/file.jpg`) and write `hover: {}` for an absent hover; the YAML reference is authoritative and the generator resolves and tolerates both. Do not "fix" such diffs by hand.
+- The `/keystatic` routes are exempt from the site's route rules: `SiteFrame` passes them through untouched, so they must not render `<PageReady />` and are outside the design-token system.
 - `scripts/generate-content.mjs` validates `content/` and generates the typed data modules (`src/features/*/data/*.generated.ts`, gitignored). It runs automatically inside `pnpm dev` / `build` / `check`; run `pnpm generate` after content edits when the dev server is already running, or before invoking `tsc` directly. On validation errors it writes nothing, so a running dev server never sees a half-generated state.
 - Validation errors are written in Japanese for the non-engineer site owner. Keep them that way when extending the generator.
 - Never edit `*.generated.ts` by hand.

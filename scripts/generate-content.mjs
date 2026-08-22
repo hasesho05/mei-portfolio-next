@@ -220,8 +220,9 @@ ${entries.join("\n")}
 const generateCommissionCut = async (registry, workDir, item, label) => {
   const path = await requireImage(workDir, item?.file, label);
   if (path === null) return null;
+  // Admin(Keystatic)は空の動画URLを null で書くことがあるので undefined と同じ扱い
   const video =
-    item?.video === undefined
+    item?.video === undefined || item?.video === null
       ? null
       : requireString(item.video, `${label} の video`);
   return `{ image: ${registry.add(path)}, alt: ${s(requireString(item?.alt, `${label}(${item?.file})の alt`))}, videoUrl: ${s(video)} }`;
@@ -279,15 +280,28 @@ const generateCommissions = async (service, exportName) => {
     if (metaItems.length === 0)
       report(`${label} に meta(label と value の一覧)が書かれていません`);
 
-    const hover =
-      data.hover === undefined || data.hover === null
-        ? null
-        : await generateCommissionCut(
-            registry,
-            workDir,
-            data.hover,
-            `${label} の hover`,
-          );
+    // hover なしの作品を Admin(Keystatic)で保存すると hover: {} が書かれる。
+    // file も alt も空のマップだけをホバー写真なしとして扱い、
+    // それ以外の書き間違い(文字列など)は従来どおりエラーにする。
+    const isBlank = (value) =>
+      value === undefined ||
+      value === null ||
+      (typeof value === "string" && value.trim() === "");
+    let hover = null;
+    if (data.hover !== undefined && data.hover !== null) {
+      if (typeof data.hover !== "object" || Array.isArray(data.hover)) {
+        report(
+          `${label} の hover の書き方が正しくありません(file と alt を書いてください)`,
+        );
+      } else if (!(isBlank(data.hover.file) && isBlank(data.hover.alt))) {
+        hover = await generateCommissionCut(
+          registry,
+          workDir,
+          data.hover,
+          `${label} の hover`,
+        );
+      }
+    }
 
     entries.push(`  {
     slug: ${s(slug)},
