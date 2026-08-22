@@ -40,7 +40,18 @@ const readYaml = async (path) => {
     return null;
   }
   try {
-    return parse(await readFile(path, "utf8"));
+    const data = parse(await readFile(path, "utf8"));
+    if (data === null || data === undefined) {
+      report(`${label} が空です(中身を書いてください)`);
+      return null;
+    }
+    if (typeof data !== "object" || Array.isArray(data)) {
+      report(
+        `${label} の形式が正しくありません(YAMLの書き方を確認してください)`,
+      );
+      return null;
+    }
+    return data;
   } catch (cause) {
     report(
       `${label} が読み取れません(YAMLの書き方を確認してください): ${cause.message}`,
@@ -64,10 +75,16 @@ const readOrder = async (sectionDir) => {
     report(`${label} に items(フォルダ名の一覧)が書かれていません`);
     return [];
   }
-  const lines = data.items
-    .filter((item) => typeof item === "string")
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0);
+  const lines = [];
+  for (const [index, item] of data.items.entries()) {
+    if (typeof item !== "string" || item.trim() === "") {
+      report(
+        `${label} の items ${index + 1}番目がフォルダ名(文字列)ではありません(数字だけの名前は "2024" のように引用符で囲んでください)`,
+      );
+      continue;
+    }
+    lines.push(item.trim());
+  }
 
   const folders = (await readdir(sectionDir, { withFileTypes: true }))
     .filter((entry) => entry.isDirectory())
@@ -102,9 +119,11 @@ const requireString = (value, label) => {
   return value;
 };
 
-const requireImage = async (workDir, file, label) => {
+const requireImage = async (workDir, file, label, missingMessage) => {
   if (typeof file !== "string" || file.trim() === "") {
-    report(`${label} の file(画像ファイル名)が書かれていません`);
+    report(
+      missingMessage ?? `${label} の file(画像ファイル名)が書かれていません`,
+    );
     return null;
   }
   const path = join(workDir, file);
@@ -145,16 +164,11 @@ const generatePortfolio = async () => {
     const data = await readYaml(join(workDir, "index.yaml"));
     if (data === null) continue;
 
-    if (typeof data.thumbnail !== "string" || data.thumbnail.trim() === "") {
-      report(
-        `${label} に thumbnail(サムネイル画像のファイル名)が書かれていません`,
-      );
-      continue;
-    }
     const thumbnailPath = await requireImage(
       workDir,
       data.thumbnail,
       `${label} の thumbnail`,
+      `${label} に thumbnail(サムネイル画像のファイル名)が書かれていません`,
     );
     if (thumbnailPath === null) continue;
 
@@ -244,7 +258,17 @@ const generateCommissions = async (service, exportName) => {
     }
     if (cuts.length !== 3) continue;
 
-    const metaInput = Array.isArray(data.meta) ? data.meta : [];
+    if (
+      data.meta !== undefined &&
+      data.meta !== null &&
+      !Array.isArray(data.meta)
+    ) {
+      report(
+        `${label} の meta の書き方が変わりました。「- label: クライアント」「  value: ◯◯」の一覧にしてください`,
+      );
+      continue;
+    }
+    const metaInput = data.meta ?? [];
     const metaItems = metaInput.map((item, index) => {
       const metaLabel = requireString(
         item?.label,
