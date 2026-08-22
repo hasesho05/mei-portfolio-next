@@ -220,8 +220,9 @@ ${entries.join("\n")}
 const generateCommissionCut = async (registry, workDir, item, label) => {
   const path = await requireImage(workDir, item?.file, label);
   if (path === null) return null;
+  // Admin(Keystatic)は空の動画URLを null で書くことがあるので undefined と同じ扱い
   const video =
-    item?.video === undefined
+    item?.video === undefined || item?.video === null
       ? null
       : requireString(item.video, `${label} の video`);
   return `{ image: ${registry.add(path)}, alt: ${s(requireString(item?.alt, `${label}(${item?.file})の alt`))}, videoUrl: ${s(video)} }`;
@@ -279,15 +280,24 @@ const generateCommissions = async (service, exportName) => {
     if (metaItems.length === 0)
       report(`${label} に meta(label と value の一覧)が書かれていません`);
 
-    const hover =
-      data.hover === undefined || data.hover === null
-        ? null
-        : await generateCommissionCut(
-            registry,
-            workDir,
-            data.hover,
-            `${label} の hover`,
-          );
+    // hover なしの作品を Admin(Keystatic)で保存すると hover: {} が書かれる。
+    // file も alt も空ならホバー写真なしとして扱う。
+    const isBlank = (value) =>
+      value === undefined ||
+      value === null ||
+      (typeof value === "string" && value.trim() === "");
+    const hasHover =
+      data.hover !== undefined &&
+      data.hover !== null &&
+      !(isBlank(data.hover.file) && isBlank(data.hover.alt));
+    const hover = hasHover
+      ? await generateCommissionCut(
+          registry,
+          workDir,
+          data.hover,
+          `${label} の hover`,
+        )
+      : null;
 
     entries.push(`  {
     slug: ${s(slug)},

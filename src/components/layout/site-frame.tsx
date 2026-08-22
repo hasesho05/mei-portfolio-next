@@ -182,7 +182,9 @@ export const SiteFrame = ({ children }: SiteFrameProps) => {
     previousPathname.current = pathname;
   }, [pathname]);
 
-  if (pathname === "/") return children;
+  // Keystatic の Admin ルートはサイトの演出(PageReady 待ちの opacity 0 や
+  // 共通ヘッダー)の対象外。素通しにしないと画面が表示されない。
+  if (pathname === "/" || pathname.startsWith("/keystatic")) return children;
 
   const isPageReady = readyPath === pathname;
   const isHeaderReady =
