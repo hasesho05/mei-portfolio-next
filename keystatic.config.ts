@@ -1,11 +1,23 @@
 /**
- * Keystatic Admin UI のスキーマ定義。`pnpm dev` 中に /keystatic で
- * content/ を編集できる(ローカルモード: 保存 = content/ への書き込み)。
+ * Keystatic Admin UI のスキーマ定義。
+ *
+ * ストレージは環境変数で切り替わる:
+ *   - NEXT_PUBLIC_KEYSTATIC_GITHUB_APP_SLUG があれば GitHub モード
+ *     (保存 = このリポジトリへのコミット → 自動ビルドで公開反映)。
+ *     このファイルはクライアントにもバンドルされるため、ビルド時に
+ *     インライン化される NEXT_PUBLIC 変数で判定する。サーバー側の残りの
+ *     必須変数は src/lib/keystatic-mode.ts が確認する
+ *   - なければローカルモード(`pnpm dev` 中に保存 = content/ への書き込み)
+ * セットアップ手順: docs/keystatic-github-setup.md
  *
  * ここは編集 UI の入力制約のみを担う。ビルド時の最終検証と型付きデータの
  * 生成は従来どおり scripts/generate-content.mjs が行い、reader API は使わない。
  */
 import { collection, config, fields, singleton } from "@keystatic/core";
+
+const storage = process.env.NEXT_PUBLIC_KEYSTATIC_GITHUB_APP_SLUG
+  ? ({ kind: "github", repo: "hasesho05/mei-portfolio-next" } as const)
+  : ({ kind: "local" } as const);
 
 const slugPattern = {
   pattern: {
@@ -119,7 +131,7 @@ const orderSchema = (collectionKey: "portfolio" | "corporate" | "wedding") => ({
 });
 
 export default config({
-  storage: { kind: "local" },
+  storage,
   ui: {
     brand: { name: "Mei Portfolio" },
   },
