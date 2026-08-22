@@ -14,14 +14,26 @@
 
 ## 1. GitHub App を作る
 
-GitHub の Settings → Developer settings → GitHub Apps → **New GitHub App** で
-手動作成する(このリポジトリはストレージを環境変数で切り替えるため、変数なしで
-起動するとローカルモードになり、Keystatic の App 作成補助フローは表示されない。
-補助フローを使いたい場合は `.env` に仮の
-`NEXT_PUBLIC_KEYSTATIC_GITHUB_APP_SLUG=temp` を置いて `pnpm dev` を起動すると
-GitHub モードで立ち上がり、セットアップ導線が出る)。
+### スクリプトで作る(推奨)
 
-App の設定は最小構成にする:
+自分のPCでリポジトリのルートから:
+
+```bash
+node scripts/setup-keystatic-github.mjs
+```
+
+質問(本番ドメイン・App名など)に答えるとブラウザが開くので、GitHub に
+ログインして確認ボタンを押すだけ。権限(Contents: Read & Write)や
+Callback URL が設定済みの App が作られ、**必要な環境変数一式と Vercel 用の
+コマンドがターミナルに表示される**。リポジトリは git remote から自動検出する
+ので、プロジェクトを引き継いだ人もそのまま実行できる。
+
+あとはスクリプトの案内どおり、App のインストール(1クリック)と
+環境変数の設定(下記 2.)をすれば完了。
+
+### 手動で作る場合
+
+GitHub の Settings → Developer settings → GitHub Apps → **New GitHub App**:
 
 - **GitHub App name / slug**: 例 `mei-portfolio-admin`(slug は後で環境変数に使う)
 - **Callback URL**: `https://<本番ドメイン>/api/keystatic/github/oauth/callback`
@@ -29,7 +41,7 @@ App の設定は最小構成にする:
 - **Webhook**: 無効でよい
 - **Repository permissions**: Contents — Read & Write のみ
 - 作成後、**Generate a new client secret** で secret を発行して控え、
-  App を `hasesho05/mei-portfolio-next` の1リポジトリだけにインストールする
+  App をこのリポジトリ1つだけにインストールする
 
 ## 2. 環境変数を設定する
 
@@ -66,6 +78,21 @@ Admin で編集できる人。
 - Admin から保存した内容がジェネレーターの検証に落ちると**ビルドが失敗し、公開は
   前の状態のまま**になる。ビルドログに日本語のエラーが出るので、それに従って
   Admin で修正して保存し直す(オーナー向けの説明は content-guide にある)
+
+## プロジェクトを移譲(引き継ぎ)するとき
+
+GitHub App は作成者のアカウントに紐づくため、リポジトリと一緒には移らない。
+新しいオーナーは次の手順で自分の App に切り替える:
+
+1. リポジトリの移譲後、新しいオーナーが
+   `node scripts/setup-keystatic-github.mjs` を実行して**自分のアカウント
+   (または Organization)に新しい App を作る**。リポジトリ名は git remote
+   から自動検出される
+2. 表示された環境変数をホスティングに設定し直して再デプロイする。
+   リポジトリの owner/name が変わった場合はスクリプトが
+   `NEXT_PUBLIC_KEYSTATIC_GITHUB_REPO` も出力するので、それも設定する
+   (`keystatic.config.ts` のフォールバック値を書き換える必要はない)
+3. 旧オーナーの App は GitHub の設定画面から削除してよい
 
 ## シークレットのローテーション
 
