@@ -20,9 +20,11 @@ import {
 import { dirname, extname, join, posix, relative, sep } from "node:path";
 import { parse } from "yaml";
 import {
+  DATA_EXTENSIONS,
   JPEG_EXTENSIONS,
   MAX_IMAGE_BYTES,
   ORIGINAL_IMAGE_BYTES,
+  walkContentFiles,
 } from "./image-limits.mjs";
 
 const root = process.cwd();
@@ -373,24 +375,27 @@ ${sections.join("\n")}
   );
 };
 
-// --- 画像サイズの検証 -------------------------------------------------------
+// --- 画像ファイルの検証 -----------------------------------------------------
 
-// 500KB 超は警告して pnpm optimize-images を案内し、カメラ元データと思われる
-// サイズ(5MB 超)はエラーにする(巨大ファイルが履歴に永久に残るのを防ぐ)。
+// content/ に置けるのは YAML と JPEG だけ。JPEG 以外の画像や想定外のファイルは
+// エラーにし(HEIC や RAW の元データが履歴に残るのを防ぐ)、500KB 超の JPEG は
+// 警告して pnpm optimize-images を案内、5MB 超はエラーで生成を止める。
 const warnings = [];
-const validateImageSizes = async (dir) => {
-  for (const entry of await readdir(dir, { withFileTypes: true })) {
-    const path = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      await validateImageSizes(path);
+const validateImageFiles = async () => {
+  for (const path of await walkContentFiles(contentDir)) {
+    const ext = extname(path).toLowerCase();
+    if (DATA_EXTENSIONS.includes(ext)) continue;
+    const label = relative(root, path);
+    if (!JPEG_EXTENSIONS.includes(ext)) {
+      report(
+        `${label} は置けないファイルです。写真は JPEG(.jpg)で書き出して入れてください(それ以外のファイルは削除してください)`,
+      );
       continue;
     }
-    if (!JPEG_EXTENSIONS.includes(extname(entry.name).toLowerCase())) continue;
     const { size } = await stat(path);
-    const label = relative(root, path);
     if (size > ORIGINAL_IMAGE_BYTES) {
       report(
-        `${label} が ${Math.round(size / 1024 / 1024)}MB あります。カメラの元データはコミットできません。Webサイズの JPEG に書き出し直してください`,
+        `${label} が ${Math.round(size / 1024 / 1024)}MB あります。カメラの元データはコミットできません。pnpm optimize-images で自動調整してください`,
       );
     } else if (size > MAX_IMAGE_BYTES) {
       warnings.push(
@@ -406,7 +411,7 @@ const counts = {
   wedding: await generateCommissions("wedding", "weddingCommissions"),
 };
 await generateSections();
-await validateImageSizes(contentDir);
+await validateImageFiles();
 
 if (warnings.length > 0) {
   console.warn("画像サイズの注意:\n");

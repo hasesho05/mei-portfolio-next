@@ -6,44 +6,42 @@
  * 写真が横倒しになることはない。JPEG 以外の画像(PNG 等)は自動変換せず、
  * JPEG で書き出し直すようエラーで案内する(サイトは JPEG のみ)。
  */
-import { readdir, rename, stat, writeFile } from "node:fs/promises";
+import { rename, stat, unlink, writeFile } from "node:fs/promises";
 import { extname, join, relative } from "node:path";
 import sharp from "sharp";
 import {
+  DATA_EXTENSIONS,
   JPEG_EXTENSIONS,
   MAX_IMAGE_BYTES,
   MAX_LONG_EDGE,
-  OTHER_IMAGE_EXTENSIONS,
+  TEMP_EXTENSION,
+  walkContentFiles,
 } from "./image-limits.mjs";
 
 const root = process.cwd();
 const contentDir = join(root, "content");
 const kb = (bytes) => `${Math.round(bytes / 1024)}KB`;
 
-const walk = async (dir) => {
-  const entries = await readdir(dir, { withFileTypes: true });
-  const files = [];
-  for (const entry of entries) {
-    const path = join(dir, entry.name);
-    if (entry.isDirectory()) files.push(...(await walk(path)));
-    else files.push(path);
-  }
-  return files;
-};
-
 const qualitySteps = [82, 74, 66, 58, 50, 42];
 
-/** 長辺を上限内に収め、品質を段階的に下げてサイズ上限内の JPEG を作る */
+/** 向きを反映して長辺を上限内に収めたピクセルから、サイズ上限内の JPEG を作る */
 const reencode = async (path) => {
+  // デコードと縮小は一度だけ行い、品質の探索は再エンコードのみ繰り返す
+  const { data, info } = await sharp(path)
+    .rotate() // EXIF の向きを反映してから縮小する(向き情報だけ落ちる事故の防止)
+    .resize({
+      width: MAX_LONG_EDGE,
+      height: MAX_LONG_EDGE,
+      fit: "inside",
+      withoutEnlargement: true,
+    })
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const pixels = {
+    raw: { width: info.width, height: info.height, channels: info.channels },
+  };
   for (const quality of qualitySteps) {
-    const buffer = await sharp(path)
-      .rotate() // EXIF の向きを反映してから縮小する(向き情報だけ落ちる事故の防止)
-      .resize({
-        width: MAX_LONG_EDGE,
-        height: MAX_LONG_EDGE,
-        fit: "inside",
-        withoutEnlargement: true,
-      })
+    const buffer = await sharp(data, pixels)
       .jpeg({ quality, mozjpeg: true })
       .toBuffer();
     if (buffer.length <= MAX_IMAGE_BYTES) return buffer;
@@ -51,7 +49,7 @@ const reencode = async (path) => {
   return null;
 };
 
-const files = await walk(contentDir);
+const files = await walkContentFiles(contentDir);
 const errors = [];
 const converted = [];
 let skipped = 0;
@@ -59,34 +57,47 @@ let skipped = 0;
 for (const path of files) {
   const label = relative(root, path);
   const ext = extname(path).toLowerCase();
-  if (OTHER_IMAGE_EXTENSIONS.includes(ext)) {
+
+  // 中断で残った一時ファイルは元画像が無事なので捨てる
+  if (ext === TEMP_EXTENSION) {
+    await unlink(path);
+    console.log(`  ${label} (処理途中の一時ファイル)を削除しました`);
+    continue;
+  }
+  if (DATA_EXTENSIONS.includes(ext)) continue;
+  if (!JPEG_EXTENSIONS.includes(ext)) {
     errors.push(
       `${label} は JPEG ではありません。JPEG(.jpg)で書き出し直して置き換えてください`,
     );
     continue;
   }
-  if (!JPEG_EXTENSIONS.includes(ext)) continue;
 
-  const before = (await stat(path)).size;
-  const metadata = await sharp(path).metadata();
-  const longEdge = Math.max(metadata.width ?? 0, metadata.height ?? 0);
-  if (before <= MAX_IMAGE_BYTES && longEdge <= MAX_LONG_EDGE) {
-    skipped += 1;
-    continue;
-  }
+  try {
+    const before = (await stat(path)).size;
+    const metadata = await sharp(path).metadata();
+    const longEdge = Math.max(metadata.width ?? 0, metadata.height ?? 0);
+    if (before <= MAX_IMAGE_BYTES && longEdge <= MAX_LONG_EDGE) {
+      skipped += 1;
+      continue;
+    }
 
-  const buffer = await reencode(path);
-  if (buffer === null) {
+    const buffer = await reencode(path);
+    if (buffer === null) {
+      errors.push(
+        `${label} を ${kb(MAX_IMAGE_BYTES)} 以下にできませんでした(元画像を確認してください)`,
+      );
+      continue;
+    }
+    // 書き込み途中で落ちても元画像が壊れないよう、一時ファイル経由で置き換える
+    const tempPath = `${path}${TEMP_EXTENSION}`;
+    await writeFile(tempPath, buffer);
+    await rename(tempPath, path);
+    converted.push(`  ${label}: ${kb(before)} → ${kb(buffer.length)}`);
+  } catch (cause) {
     errors.push(
-      `${label} を ${kb(MAX_IMAGE_BYTES)} 以下にできませんでした(元画像を確認してください)`,
+      `${label} が画像として読み取れません(壊れている可能性があります): ${cause.message}`,
     );
-    continue;
   }
-  // 書き込み途中で落ちても元画像が壊れないよう、一時ファイル経由で置き換える
-  const tempPath = `${path}.optimizing`;
-  await writeFile(tempPath, buffer);
-  await rename(tempPath, path);
-  converted.push(`  ${label}: ${kb(before)} → ${kb(buffer.length)}`);
 }
 
 if (converted.length > 0) {
