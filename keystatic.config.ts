@@ -15,8 +15,21 @@
  */
 import { collection, config, fields, singleton } from "@keystatic/core";
 
+// 移譲などでリポジトリのオーナー名が変わったら、コードを書き換えずに
+// NEXT_PUBLIC_KEYSTATIC_GITHUB_REPO(owner/name)で上書きできる。
+// 形式が壊れていたら実行時の分かりにくい404ではなくビルドで止める
+const repoInput =
+  process.env.NEXT_PUBLIC_KEYSTATIC_GITHUB_REPO ??
+  "hasesho05/mei-portfolio-next";
+const repoParts = repoInput.split("/");
+if (repoParts.length !== 2 || repoParts.some((part) => part === ""))
+  throw new Error(
+    `NEXT_PUBLIC_KEYSTATIC_GITHUB_REPO は owner/name の形式で指定してください(いまは「${repoInput}」)`,
+  );
+const [repoOwner, repoName] = repoParts;
+
 const storage = process.env.NEXT_PUBLIC_KEYSTATIC_GITHUB_APP_SLUG
-  ? ({ kind: "github", repo: "hasesho05/mei-portfolio-next" } as const)
+  ? ({ kind: "github", repo: `${repoOwner}/${repoName}` } as const)
   : ({ kind: "local" } as const);
 
 const slugPattern = {
