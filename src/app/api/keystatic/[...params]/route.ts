@@ -1,6 +1,8 @@
-// Admin UI と同じく本番では 404(ローカルモードの書き込みは本番で永続しない)。
-// Keystatic のハンドラーは import() で遅延構築し、本番ビルドが Admin の
-// 依存グラフやファイル監視を抱え込まないようにする。
+import { isKeystaticGithubConfigured } from "@/lib/keystatic-mode";
+
+// Admin UI と同じ条件で本番を 404 にする(GitHub モード未構成の本番では
+// ローカルモードの書き込みが永続しない)。Keystatic のハンドラーは import() で
+// 遅延構築し、404 になるビルドが Admin の依存グラフを抱え込まないようにする。
 let cachedHandler: Promise<{
   GET: (request: Request) => Promise<Response>;
   POST: (request: Request) => Promise<Response>;
@@ -17,7 +19,7 @@ const loadHandler = () => {
 };
 
 const respond = async (request: Request) => {
-  if (process.env.NODE_ENV === "production")
+  if (process.env.NODE_ENV === "production" && !isKeystaticGithubConfigured())
     return new Response(null, { status: 404 });
   const handler = await loadHandler();
   return (request.method === "POST" ? handler.POST : handler.GET)(request);
