@@ -9,9 +9,21 @@
  *
  * 非エンジニアが編集する前提なので、エラーは日本語で・全部まとめて報告する。
  */
-import { access, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, join, posix, relative, sep } from "node:path";
+import {
+  access,
+  mkdir,
+  readdir,
+  readFile,
+  stat,
+  writeFile,
+} from "node:fs/promises";
+import { dirname, extname, join, posix, relative, sep } from "node:path";
 import { parse } from "yaml";
+import {
+  JPEG_EXTENSIONS,
+  MAX_IMAGE_BYTES,
+  ORIGINAL_IMAGE_BYTES,
+} from "./image-limits.mjs";
 
 const root = process.cwd();
 const contentDir = join(root, "content");
@@ -361,12 +373,46 @@ ${sections.join("\n")}
   );
 };
 
+// --- 画像サイズの検証 -------------------------------------------------------
+
+// 500KB 超は警告して pnpm optimize-images を案内し、カメラ元データと思われる
+// サイズ(5MB 超)はエラーにする(巨大ファイルが履歴に永久に残るのを防ぐ)。
+const warnings = [];
+const validateImageSizes = async (dir) => {
+  for (const entry of await readdir(dir, { withFileTypes: true })) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      await validateImageSizes(path);
+      continue;
+    }
+    if (!JPEG_EXTENSIONS.includes(extname(entry.name).toLowerCase())) continue;
+    const { size } = await stat(path);
+    const label = relative(root, path);
+    if (size > ORIGINAL_IMAGE_BYTES) {
+      report(
+        `${label} が ${Math.round(size / 1024 / 1024)}MB あります。カメラの元データはコミットできません。Webサイズの JPEG に書き出し直してください`,
+      );
+    } else if (size > MAX_IMAGE_BYTES) {
+      warnings.push(
+        `${label} が ${Math.round(size / 1024)}KB あります(目安 ${Math.round(MAX_IMAGE_BYTES / 1024)}KB 以下)。pnpm optimize-images で自動調整できます`,
+      );
+    }
+  }
+};
+
 const counts = {
   portfolio: await generatePortfolio(),
   corporate: await generateCommissions("corporate", "corporateCommissions"),
   wedding: await generateCommissions("wedding", "weddingCommissions"),
 };
 await generateSections();
+await validateImageSizes(contentDir);
+
+if (warnings.length > 0) {
+  console.warn("画像サイズの注意:\n");
+  for (const message of warnings) console.warn(`  ! ${message}`);
+  console.warn();
+}
 
 if (errors.length > 0) {
   console.error(
