@@ -14,19 +14,22 @@
 
 ## 1. GitHub App を作る
 
-Keystatic のセットアップフローが App 作成を補助してくれる:
+GitHub の Settings → Developer settings → GitHub Apps → **New GitHub App** で
+手動作成する(このリポジトリはストレージを環境変数で切り替えるため、変数なしで
+起動するとローカルモードになり、Keystatic の App 作成補助フローは表示されない。
+補助フローを使いたい場合は `.env` に仮の
+`NEXT_PUBLIC_KEYSTATIC_GITHUB_APP_SLUG=temp` を置いて `pnpm dev` を起動すると
+GitHub モードで立ち上がり、セットアップ導線が出る)。
 
-1. ローカルで `.env` を**置かずに** `pnpm dev` を起動し、
-   `http://localhost:3000/keystatic` を開く
-2. ダッシュボード下部などに出る「Connect to GitHub」系の導線から
-   セットアップを開始すると、GitHub App 作成画面に遷移する
-   (出ない場合は https://keystatic.com/docs/github-mode の手順どおり
-   GitHub App を手動で作成する)
-3. App の設定は最小構成にする:
-   - **Repository permissions**: Contents — Read & Write のみ
-   - インストール先: `hasesho05/mei-portfolio-next` の1リポジトリのみ
-   - Callback URL: `https://<本番ドメイン>/api/keystatic/github/oauth/callback`
-     (ローカル検証も行うなら `http://127.0.0.1:3000/...` も追加)
+App の設定は最小構成にする:
+
+- **GitHub App name / slug**: 例 `mei-portfolio-admin`(slug は後で環境変数に使う)
+- **Callback URL**: `https://<本番ドメイン>/api/keystatic/github/oauth/callback`
+  (ローカル検証も行うなら `http://127.0.0.1:3000/api/keystatic/github/oauth/callback` も追加)
+- **Webhook**: 無効でよい
+- **Repository permissions**: Contents — Read & Write のみ
+- 作成後、**Generate a new client secret** で secret を発行して控え、
+  App を `hasesho05/mei-portfolio-next` の1リポジトリだけにインストールする
 
 ## 2. 環境変数を設定する
 
@@ -36,7 +39,7 @@ Keystatic のセットアップフローが App 作成を補助してくれる:
 | --- | --- |
 | `KEYSTATIC_GITHUB_CLIENT_ID` | GitHub App の Client ID |
 | `KEYSTATIC_GITHUB_CLIENT_SECRET` | GitHub App の Client secret(発行して控える) |
-| `KEYSTATIC_SECRET` | セッション署名用のランダム文字列(`openssl rand -hex 32` などで生成) |
+| `KEYSTATIC_SECRET` | セッション署名用のランダム文字列。**32文字以上必須**(`openssl rand -hex 32` で生成)。短いと未構成扱いになり `/keystatic` は 404 のまま |
 | `NEXT_PUBLIC_KEYSTATIC_GITHUB_APP_SLUG` | GitHub App の slug(App の URL 末尾の名前) |
 
 注意:
