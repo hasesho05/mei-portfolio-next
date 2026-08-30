@@ -6,7 +6,7 @@
   "scripts": {
     "generate": "node scripts/generate-content.mjs",
     "optimize-images": "node scripts/optimize-images.mjs",
-    "dev": "node scripts/generate-content.mjs && next dev",
+    "dev": "node scripts/generate-content.mjs && next dev --webpack",
     "build": "node scripts/generate-content.mjs && next build",
     "start": "next start",
     "check": "node scripts/generate-content.mjs && biome check . && node scripts/check-no-function-declarations.mjs",
